@@ -1,0 +1,6 @@
+{
+  "name": "Veklom M2M Ledger & Repository Tracker",
+  "description": "Forensic clone attribution dashboard, machine identity verification passport gate, and real-time capability micropayment ledger engine designed for technical teams.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
