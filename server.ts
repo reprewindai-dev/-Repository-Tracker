@@ -49,11 +49,27 @@ const TELEMETRY_BUS: TelemetryLog[] = [];
 
 // Helper to log telemetry
 function emitTelemetry(type: TelemetryLog['type'], payload: any) {
+  // Deep clone and sanitize payload to prevent leaking tokens safely
+  let sanitizedPayload = payload;
+  try {
+    if (payload !== undefined) {
+      sanitizedPayload = JSON.parse(JSON.stringify(payload));
+      if (sanitizedPayload && typeof sanitizedPayload === 'object') {
+        if (sanitizedPayload.token) {
+          sanitizedPayload.token = `${sanitizedPayload.token.substring(0, 14)}***`;
+        }
+      }
+    }
+  } catch (e) {
+    // Fallback if parsing fails
+    sanitizedPayload = payload;
+  }
+
   const log: TelemetryLog = {
     id: `tel_${crypto.randomBytes(8).toString('hex')}`,
     type,
     timestamp: new Date().toISOString(),
-    payload
+    payload: sanitizedPayload
   };
   TELEMETRY_BUS.unshift(log);
   if (TELEMETRY_BUS.length > 500) {
@@ -204,7 +220,13 @@ app.post("/api/identity/register", (req, res) => {
 
 // 3. Get Active Machines list (for dashboard display)
 app.get("/api/identity/list", (req, res) => {
-  res.json(Array.from(MACHINE_DB.values()));
+  const machines = Array.from(MACHINE_DB.values()).map(machine => {
+    return {
+      ...machine,
+      token: machine.token ? `${machine.token.substring(0, 14)}***` : undefined
+    };
+  });
+  res.json(machines);
 });
 
 // 4. Record Metering Event
