@@ -93,7 +93,9 @@ const seedMachines = [
 
 seedMachines.forEach(m => {
   MACHINE_DB.set(m.token, m as MachineIdentity);
-  emitTelemetry("identity.registered", m);
+  // 🛡️ Security: Never emit tokens into telemetry bus
+  const { token, ...safeMachine } = m;
+  emitTelemetry("identity.registered", safeMachine);
 });
 
 // Record some seed microtransactions
@@ -190,7 +192,10 @@ app.post("/api/identity/register", (req, res) => {
   };
 
   MACHINE_DB.set(token, newMachine);
-  emitTelemetry("identity.registered", newMachine);
+
+  // 🛡️ Security: Strip sensitive token before emitting to public bus
+  const { token: _, ...safeTelemetryMachine } = newMachine;
+  emitTelemetry("identity.registered", safeTelemetryMachine);
 
   res.json({
     status: "registered",
@@ -204,7 +209,9 @@ app.post("/api/identity/register", (req, res) => {
 
 // 3. Get Active Machines list (for dashboard display)
 app.get("/api/identity/list", (req, res) => {
-  res.json(Array.from(MACHINE_DB.values()));
+  // 🛡️ Security: Strip sensitive machine tokens before returning list
+  const safeMachines = Array.from(MACHINE_DB.values()).map(({ token, ...safeMachine }) => safeMachine);
+  res.json(safeMachines);
 });
 
 // 4. Record Metering Event
