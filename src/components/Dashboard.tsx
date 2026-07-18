@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ShieldAlert, 
@@ -47,7 +47,10 @@ export default function Dashboard({
   const totalIdentified = machines.length;
   
   // Total Micropayments calculated from real and seed data
-  const totalSettledRevenue = meteringEvents.reduce((sum, e) => sum + e.billing.total_usd, 0);
+  // ⚡ Bolt: Memoized to prevent recalculation on every polling tick (4s)
+  const totalSettledRevenue = useMemo(() => {
+    return meteringEvents.reduce((sum, e) => sum + e.billing.total_usd, 0);
+  }, [meteringEvents]);
   
   // Estimated leak is calculated as: (Total Clones - Identified/Authorized executions) * average execution value ($0.04)
   const estimatedUnmonetizedLeak = ((totalClones - meteringEvents.length) * 0.04).toFixed(2);
@@ -57,23 +60,28 @@ export default function Dashboard({
   const height = 180;
   const padding = 25;
 
-  const chartData = CLONE_ATTRIBUTION;
-  const maxClones = Math.max(...chartData.map(d => d.clones)) * 1.1;
+  // ⚡ Bolt: Memoized complex SVG path generation that runs on every render
+  const { pointsClones, pointsKnown, pathClones, pathKnown, chartData } = useMemo(() => {
+    const chartData = CLONE_ATTRIBUTION;
+    const maxClones = Math.max(...chartData.map(d => d.clones)) * 1.1;
 
-  const pointsClones = chartData.map((d, i) => {
-    const x = padding + (i * (width - 2 * padding)) / (chartData.length - 1);
-    const y = height - padding - (d.clones * (height - 2 * padding)) / maxClones;
-    return { x, y, ...d };
-  });
+    const pointsClones = chartData.map((d, i) => {
+      const x = padding + (i * (width - 2 * padding)) / (chartData.length - 1);
+      const y = height - padding - (d.clones * (height - 2 * padding)) / maxClones;
+      return { x, y, ...d };
+    });
 
-  const pointsKnown = chartData.map((d, i) => {
-    const x = padding + (i * (width - 2 * padding)) / (chartData.length - 1);
-    const y = height - padding - (d.known * (height - 2 * padding)) / maxClones;
-    return { x, y, ...d };
-  });
+    const pointsKnown = chartData.map((d, i) => {
+      const x = padding + (i * (width - 2 * padding)) / (chartData.length - 1);
+      const y = height - padding - (d.known * (height - 2 * padding)) / maxClones;
+      return { x, y, ...d };
+    });
 
-  const pathClones = pointsClones.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
-  const pathKnown = pointsKnown.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
+    const pathClones = pointsClones.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
+    const pathKnown = pointsKnown.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
+
+    return { pointsClones, pointsKnown, pathClones, pathKnown, chartData };
+  }, [width, height, padding]);
 
   return (
     <div className="space-y-6" id="dashboard-root">
