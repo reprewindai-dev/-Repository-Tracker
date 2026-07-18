@@ -1,0 +1,4 @@
+## 2025-07-18 - [Token Leakage in API and Telemetry]
+**Vulnerability:** Machine identity tokens were being leaked through the `/api/identity/list` endpoint and the public telemetry bus (`/api/telemetry/bus`).
+**Learning:** Returning full in-memory objects directly in API responses or logs, even when seemingly internal like `TELEMETRY_BUS`, can expose sensitive credentials embedded within those objects if not explicitly sanitized.
+**Prevention:** Always destructure or explicitly map to omit sensitive properties like `token` or `password` before returning state objects in APIs or logging them to public event buses. Use robust Data Transfer Object (DTO) patterns or explicit "safe" mappings when serializing.
