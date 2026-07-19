@@ -93,7 +93,9 @@ const seedMachines = [
 
 seedMachines.forEach(m => {
   MACHINE_DB.set(m.token, m as MachineIdentity);
-  emitTelemetry("identity.registered", m);
+  // 🛡️ Sentinel: Omit sensitive token from public telemetry event
+  const { token, ...safeMachine } = m;
+  emitTelemetry("identity.registered", safeMachine);
 });
 
 // Record some seed microtransactions
@@ -190,7 +192,9 @@ app.post("/api/identity/register", (req, res) => {
   };
 
   MACHINE_DB.set(token, newMachine);
-  emitTelemetry("identity.registered", newMachine);
+  // 🛡️ Sentinel: Omit sensitive token from public telemetry event
+  const { token: _, ...safeMachine } = newMachine;
+  emitTelemetry("identity.registered", safeMachine);
 
   res.json({
     status: "registered",
@@ -204,7 +208,12 @@ app.post("/api/identity/register", (req, res) => {
 
 // 3. Get Active Machines list (for dashboard display)
 app.get("/api/identity/list", (req, res) => {
-  res.json(Array.from(MACHINE_DB.values()));
+  // 🛡️ Sentinel: Omit sensitive tokens from public API response
+  const safeMachines = Array.from(MACHINE_DB.values()).map(machine => {
+    const { token, ...safeMachine } = machine;
+    return safeMachine;
+  });
+  res.json(safeMachines);
 });
 
 // 4. Record Metering Event
@@ -278,7 +287,8 @@ app.post("/api/gateway/:capability", (req, res) => {
 
   const machine = MACHINE_DB.get(token);
   if (!machine) {
-    emitTelemetry("gateway.error", { error: "Invalid Machine Token", token, capability });
+    // 🛡️ Sentinel: Omit invalid token from error telemetry to prevent accidental credential logging
+    emitTelemetry("gateway.error", { error: "Invalid Machine Token", capability });
     return res.status(403).json({
       error: "Value Boundary Access Denied",
       reason: "Machine token has expired or is invalid.",
