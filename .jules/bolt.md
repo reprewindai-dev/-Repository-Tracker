@@ -1,0 +1,3 @@
+## 2025-03-08 - [React Polling Re-renders]
+**Learning:** This codebase uses a frequent (4-second) API polling loop in `App.tsx` (`fetchServerState`). This design triggers continuous re-renders of the main app and its heavy child components like `Dashboard.tsx`, regardless of whether the user is interacting with it. Doing SVG charting or expensive `.reduce()` aggregations synchronously inside these components without memoization causes massive CPU churn and potential frame drops, especially when interacting with hover states.
+**Action:** Always investigate the `useEffect` and data-fetching boundaries. If a parent polls frequently, enforce `useMemo` on child components and any map/reduce logic to skip re-calculations when data hasn't fundamentally changed.
