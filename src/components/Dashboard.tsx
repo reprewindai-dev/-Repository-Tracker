@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ShieldAlert, 
@@ -47,10 +47,16 @@ export default function Dashboard({
   const totalIdentified = machines.length;
   
   // Total Micropayments calculated from real and seed data
-  const totalSettledRevenue = meteringEvents.reduce((sum, e) => sum + e.billing.total_usd, 0);
+  const totalSettledRevenue = useMemo(
+    () => meteringEvents.reduce((sum, e) => sum + e.billing.total_usd, 0),
+    [meteringEvents]
+  );
   
   // Estimated leak is calculated as: (Total Clones - Identified/Authorized executions) * average execution value ($0.04)
-  const estimatedUnmonetizedLeak = ((totalClones - meteringEvents.length) * 0.04).toFixed(2);
+  const estimatedUnmonetizedLeak = useMemo(
+    () => ((totalClones - meteringEvents.length) * 0.04).toFixed(2),
+    [totalClones, meteringEvents.length]
+  );
 
   // SVG Chart Dimensions & Computations
   const width = 600;
@@ -58,22 +64,34 @@ export default function Dashboard({
   const padding = 25;
 
   const chartData = CLONE_ATTRIBUTION;
-  const maxClones = Math.max(...chartData.map(d => d.clones)) * 1.1;
 
-  const pointsClones = chartData.map((d, i) => {
-    const x = padding + (i * (width - 2 * padding)) / (chartData.length - 1);
-    const y = height - padding - (d.clones * (height - 2 * padding)) / maxClones;
-    return { x, y, ...d };
-  });
+  // Memoize chart paths and points to prevent recalculation on every 4s polling re-render
+  const { pointsClones, pointsKnown, pathClones, pathKnown, maxClones } = useMemo(() => {
+    const maxClonesVal = Math.max(...chartData.map(d => d.clones)) * 1.1;
 
-  const pointsKnown = chartData.map((d, i) => {
-    const x = padding + (i * (width - 2 * padding)) / (chartData.length - 1);
-    const y = height - padding - (d.known * (height - 2 * padding)) / maxClones;
-    return { x, y, ...d };
-  });
+    const pClones = chartData.map((d, i) => {
+      const x = padding + (i * (width - 2 * padding)) / (chartData.length - 1);
+      const y = height - padding - (d.clones * (height - 2 * padding)) / maxClonesVal;
+      return { x, y, ...d };
+    });
 
-  const pathClones = pointsClones.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
-  const pathKnown = pointsKnown.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
+    const pKnown = chartData.map((d, i) => {
+      const x = padding + (i * (width - 2 * padding)) / (chartData.length - 1);
+      const y = height - padding - (d.known * (height - 2 * padding)) / maxClonesVal;
+      return { x, y, ...d };
+    });
+
+    const pathC = pClones.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
+    const pathK = pKnown.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
+
+    return {
+      pointsClones: pClones,
+      pointsKnown: pKnown,
+      pathClones: pathC,
+      pathKnown: pathK,
+      maxClones: maxClonesVal
+    };
+  }, [chartData]); // CLONE_ATTRIBUTION is static, but this is a pattern
 
   return (
     <div className="space-y-6" id="dashboard-root">
