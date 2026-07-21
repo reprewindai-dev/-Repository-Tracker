@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { CAPABILITIES } from '../data';
 
-export default function SpecsViewer() {
+export default React.memo(function SpecsViewer() {
   const [activeTab, setActiveTab] = useState<'discovery' | 'identity' | 'metering' | 'x402' | 'mtp'>('discovery');
   const [copied, setCopied] = useState<boolean>(false);
 
@@ -295,4 +295,4 @@ export default function SpecsViewer() {
 
     </div>
   );
-}
+});
