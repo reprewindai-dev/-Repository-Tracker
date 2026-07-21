@@ -31,6 +31,29 @@ interface DashboardProps {
   activeSimulatedTab: () => void;
 }
 
+// Static SVG Chart Dimensions & Computations
+const SVG_WIDTH = 600;
+const SVG_HEIGHT = 180;
+const SVG_PADDING = 25;
+
+const chartData = CLONE_ATTRIBUTION;
+const maxClones = Math.max(...chartData.map(d => d.clones)) * 1.1;
+
+const pointsClones = chartData.map((d, i) => {
+  const x = SVG_PADDING + (i * (SVG_WIDTH - 2 * SVG_PADDING)) / (chartData.length - 1);
+  const y = SVG_HEIGHT - SVG_PADDING - (d.clones * (SVG_HEIGHT - 2 * SVG_PADDING)) / maxClones;
+  return { x, y, ...d };
+});
+
+const pointsKnown = chartData.map((d, i) => {
+  const x = SVG_PADDING + (i * (SVG_WIDTH - 2 * SVG_PADDING)) / (chartData.length - 1);
+  const y = SVG_HEIGHT - SVG_PADDING - (d.known * (SVG_HEIGHT - 2 * SVG_PADDING)) / maxClones;
+  return { x, y, ...d };
+});
+
+const pathClones = pointsClones.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
+const pathKnown = pointsKnown.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
+
 export default function Dashboard({ 
   machines, 
   meteringEvents, 
@@ -52,29 +75,7 @@ export default function Dashboard({
   // Estimated leak is calculated as: (Total Clones - Identified/Authorized executions) * average execution value ($0.04)
   const estimatedUnmonetizedLeak = ((totalClones - meteringEvents.length) * 0.04).toFixed(2);
 
-  // SVG Chart Dimensions & Computations
-  const width = 600;
-  const height = 180;
-  const padding = 25;
-
-  const chartData = CLONE_ATTRIBUTION;
-  const maxClones = Math.max(...chartData.map(d => d.clones)) * 1.1;
-
-  const pointsClones = chartData.map((d, i) => {
-    const x = padding + (i * (width - 2 * padding)) / (chartData.length - 1);
-    const y = height - padding - (d.clones * (height - 2 * padding)) / maxClones;
-    return { x, y, ...d };
-  });
-
-  const pointsKnown = chartData.map((d, i) => {
-    const x = padding + (i * (width - 2 * padding)) / (chartData.length - 1);
-    const y = height - padding - (d.known * (height - 2 * padding)) / maxClones;
-    return { x, y, ...d };
-  });
-
-  const pathClones = pointsClones.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
-  const pathKnown = pointsKnown.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
-
+  // SVG Chart Dimensions & Computations (Static data extracted outside render)
   return (
     <div className="space-y-6" id="dashboard-root">
       {/* Metrics Banner */}
@@ -184,16 +185,16 @@ export default function Dashboard({
 
         {/* Custom SVG Line Chart */}
         <div className="relative bg-slate-950/60 rounded-xl p-2 border border-slate-800/60 overflow-hidden">
-          <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto">
+          <svg viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} className="w-full h-auto">
             {/* Grid lines */}
             {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => {
-              const y = padding + ratio * (height - 2 * padding);
+              const y = SVG_PADDING + ratio * (SVG_HEIGHT - 2 * SVG_PADDING);
               return (
                 <line 
                   key={i} 
-                  x1={padding} 
+                  x1={SVG_PADDING}
                   y1={y} 
-                  x2={width - padding} 
+                  x2={SVG_WIDTH - SVG_PADDING}
                   y2={y} 
                   className="stroke-slate-800/80 stroke-dasharray-[2,2]" 
                   strokeDasharray="2 2"
@@ -203,14 +204,14 @@ export default function Dashboard({
 
             {/* Red Area (Leaking clones) */}
             <path
-              d={`${pathClones} L ${pointsClones[pointsClones.length - 1].x} ${height - padding} L ${pointsClones[0].x} ${height - padding} Z`}
+              d={`${pathClones} L ${pointsClones[pointsClones.length - 1].x} ${SVG_HEIGHT - SVG_PADDING} L ${pointsClones[0].x} ${SVG_HEIGHT - SVG_PADDING} Z`}
               fill="url(#red-gradient)"
               className="opacity-15"
             />
 
             {/* Green Area (Verified identities) */}
             <path
-              d={`${pathKnown} L ${pointsKnown[pointsKnown.length - 1].x} ${height - padding} L ${pointsKnown[0].x} ${height - padding} Z`}
+              d={`${pathKnown} L ${pointsKnown[pointsKnown.length - 1].x} ${SVG_HEIGHT - SVG_PADDING} L ${pointsKnown[0].x} ${SVG_HEIGHT - SVG_PADDING} Z`}
               fill="url(#green-gradient)"
               className="opacity-25"
             />
@@ -262,12 +263,12 @@ export default function Dashboard({
 
             {/* X-axis texts */}
             {chartData.map((d, i) => {
-              const x = padding + (i * (width - 2 * padding)) / (chartData.length - 1);
+              const x = SVG_PADDING + (i * (SVG_WIDTH - 2 * SVG_PADDING)) / (chartData.length - 1);
               return (
                 <text
                   key={`tx-${i}`}
                   x={x}
-                  y={height - 6}
+                  y={SVG_HEIGHT - 6}
                   textAnchor="middle"
                   className="fill-slate-500 font-mono text-[9px]"
                 >
