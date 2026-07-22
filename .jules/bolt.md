@@ -1,3 +1,8 @@
 ## 2024-03-09 - Extracted static computations from polling render loop
 **Learning:** In a React application that relies on `setInterval` polling (like the 4-second `fetchServerState` loop in `App.tsx`), any child components connected to that state will re-render frequently. I discovered that expensive static operations—such as calculating SVG points (`pointsClones`, `pointsKnown`) and reducing them into large string paths—were placed inside the `Dashboard` component body, causing them to re-run on every single poll, needlessly burning CPU.
 **Action:** Always inspect the parent's state management frequency. If a component is subject to frequent polling/re-renders, explicitly verify that no static or pure array operations (like mapping charts over constant or rarely-changing data) are left un-memoized or inside the render cycle. Extract them to module scope or use `useMemo`.
+## 2024-03-09 - Avoided unnecessary re-renders in polling mechanism
+**Learning:** The React application utilizes a 4-second polling loop to fetch server state. Without proper optimizations, this results in continuous re-renders of the root component (`App.tsx`) and its large child components, significantly degrading performance over time.
+**Action:** Implemented a two-pronged approach:
+1. Checked incoming data from the poll against existing state using `JSON.stringify` before calling state setter functions. This prevents allocating new object references when the data hasn't actually changed.
+2. Memoized child components (`Dashboard`, `ClientSimulator`, `AiDetective`, `SpecsViewer`) using `React.memo` and ensuring passed functions use `useCallback`. This guarantees children only re-render when actual state variations occur, rather than unconditionally on every poll.
