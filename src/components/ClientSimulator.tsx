@@ -28,7 +28,7 @@ interface ClientSimulatorProps {
   onEventTriggered: () => void;
 }
 
-export default function ClientSimulator({ onEventTriggered }: ClientSimulatorProps) {
+const ClientSimulator = React.memo(function ClientSimulator({ onEventTriggered }: ClientSimulatorProps) {
   // Stages states
   const [activeStep, setActiveStep] = useState<number>(1);
   const [consoleLogs, setConsoleLogs] = useState<string[]>([
@@ -581,4 +581,6 @@ export default function ClientSimulator({ onEventTriggered }: ClientSimulatorPro
 
     </div>
   );
-}
+});
+
+export default ClientSimulator;

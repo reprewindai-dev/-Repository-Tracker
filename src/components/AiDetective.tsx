@@ -93,7 +93,7 @@ function renderFormattedText(text: string) {
   });
 }
 
-export default function AiDetective() {
+const AiDetective = React.memo(function AiDetective() {
   const [query, setQuery] = useState<string>("");
   const [githubUrl, setGithubUrl] = useState<string>("");
   const [githubEmail, setGithubEmail] = useState<string>("");
@@ -420,4 +420,6 @@ export default function AiDetective() {
 
     </div>
   );
-}
+});
+
+export default AiDetective;
