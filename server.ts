@@ -237,6 +237,25 @@ app.post("/api/metering/record", (req, res) => {
     return res.status(400).json({ error: "Missing identity or capability details." });
   }
 
+  // 🛡️ Sentinel: Added missing authentication to prevent unauthorized metering records
+  const token = req.headers["x-veklom-machine-token"] as string;
+  if (!token) {
+    emitTelemetry("gateway.error", { error: "Missing Machine Token Header for metering", capability });
+    return res.status(401).json({
+      error: "Value Boundary Access Blocked",
+      reason: "Missing 'x-veklom-machine-token' header. Machine identity required."
+    });
+  }
+
+  const machine = MACHINE_DB.get(token);
+  if (!machine) {
+    emitTelemetry("gateway.error", { error: "Invalid Machine Token for metering", token, capability });
+    return res.status(403).json({
+      error: "Value Boundary Access Denied",
+      reason: "Machine token has expired or is invalid."
+    });
+  }
+
   const targetCap = CAPABILITIES.find(c => c.id === capability);
   const unit_price = targetCap ? targetCap.price_usd : 0.01;
 
