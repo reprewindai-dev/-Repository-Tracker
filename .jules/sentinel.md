@@ -12,3 +12,8 @@
 **Vulnerability:** The `/api/metering/record` endpoint was completely unauthenticated, allowing any client to create metering events on behalf of other installations or workspaces without verifying machine identity.
 **Learning:** Even internal endpoints or capabilities mapped via a "gateway" need direct endpoint validation if they are exposed directly.
 **Prevention:** Always enforce machine token validation on all value-boundary or state-modifying endpoints (especially metering/billing).
+
+## 2025-02-25 - [Missing Rate Limit on AI Endpoint]
+**Vulnerability:** The `/api/detective/analyze` endpoint lacked rate limiting, allowing unrestricted access to the expensive AI API processing logic (Gemini API).
+**Learning:** Exposing third-party APIs (like LLMs) on unprotected endpoints without rate limits turns the application into an open proxy for financial Denial of Service (DoS) attacks, draining API quotas and incurring high costs.
+**Prevention:** Implement IP-based rate limiting (or token-based if authenticated) on any endpoint that proxies to expensive or rate-constrained third-party services.

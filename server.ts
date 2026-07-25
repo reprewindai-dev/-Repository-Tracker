@@ -561,8 +561,45 @@ async function fetchGitHubData(owner: string, repo: string, token?: string): Pro
   return result;
 }
 
+// Simple in-memory rate limiter for AI Detective endpoint
+const aiRateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 5;
+
+// Clean up old rate limit entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, data] of aiRateLimitMap.entries()) {
+    if (now > data.resetTime) {
+      aiRateLimitMap.delete(ip);
+    }
+  }
+}, 60000);
+
 // 8. AI M2M Detective Investigation (using gemini-3.5-flash with 100% Real-Time GitHub Fetching)
 app.post("/api/detective/analyze", async (req, res) => {
+  // 🛡️ Sentinel: Add IP-based rate limiting to prevent Gemini API abuse and financial DoS
+  const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+  const rateData = aiRateLimitMap.get(clientIp) || { count: 0, resetTime: now + RATE_LIMIT_WINDOW_MS };
+
+  if (now > rateData.resetTime) {
+    rateData.count = 1;
+    rateData.resetTime = now + RATE_LIMIT_WINDOW_MS;
+  } else {
+    rateData.count++;
+  }
+
+  aiRateLimitMap.set(clientIp, rateData);
+
+  if (rateData.count > MAX_REQUESTS_PER_WINDOW) {
+    emitTelemetry("gateway.error", { error: "AI Detective Rate limit exceeded", clientIp });
+    return res.status(429).json({
+      success: false,
+      error: "Too many requests. Please try again later."
+    });
+  }
+
   const { query, githubUrl, githubEmail, githubToken } = req.body;
 
   try {
