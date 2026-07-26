@@ -54,13 +54,13 @@ const pointsKnown = chartData.map((d, i) => {
 const pathClones = pointsClones.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
 const pathKnown = pointsKnown.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
 
-export default function Dashboard({ 
+const Dashboard = ({
   machines, 
   meteringEvents, 
   telemetryLogs, 
   onRefresh,
   activeSimulatedTab
-}: DashboardProps) {
+}: DashboardProps) => {
   const [hoveredDataPoint, setHoveredDataPoint] = useState<any | null>(null);
   const [filterRepo, setFilterRepo] = useState<'all' | 'frontend' | 'backend'>('all');
 
@@ -669,4 +669,6 @@ export default function Dashboard({
       </div>
     </div>
   );
-}
+};
+
+export default React.memo(Dashboard);
