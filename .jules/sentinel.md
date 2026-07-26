@@ -12,3 +12,8 @@
 **Vulnerability:** The `/api/metering/record` endpoint was completely unauthenticated, allowing any client to create metering events on behalf of other installations or workspaces without verifying machine identity.
 **Learning:** Even internal endpoints or capabilities mapped via a "gateway" need direct endpoint validation if they are exposed directly.
 **Prevention:** Always enforce machine token validation on all value-boundary or state-modifying endpoints (especially metering/billing).
+
+## 2025-03-01 - Missing Authentication on AI Gateway Endpoint
+**Vulnerability:** The `/api/detective/analyze` endpoint was completely unauthenticated. It could be hit by anyone without passing the `x-veklom-machine-token`.
+**Learning:** Even though the endpoint wasn't a standard "metering" or "gateway execution" capability, it made expensive downstream LLM calls and fetched remote GitHub statistics without charging credits or checking identity boundaries.
+**Prevention:** All API endpoints that perform expensive computations or outbound requests must validate machine identity using the standardized `req.headers["x-veklom-machine-token"]` check before proceeding.
