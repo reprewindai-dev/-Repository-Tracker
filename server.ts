@@ -565,6 +565,25 @@ async function fetchGitHubData(owner: string, repo: string, token?: string): Pro
 app.post("/api/detective/analyze", async (req, res) => {
   const { query, githubUrl, githubEmail, githubToken } = req.body;
 
+  // 🛡️ Sentinel: Added missing authentication to prevent unauthorized API cost consumption
+  const token = req.headers["x-veklom-machine-token"] as string;
+  if (!token) {
+    emitTelemetry("gateway.error", { error: "Missing Machine Token Header for AI Detective", capability: "detective_analyze" });
+    return res.status(401).json({
+      success: false,
+      error: "Value Boundary Access Blocked: Missing 'x-veklom-machine-token' header."
+    });
+  }
+
+  const machine = MACHINE_DB.get(token);
+  if (!machine) {
+    emitTelemetry("gateway.error", { error: "Invalid Machine Token for AI Detective", token, capability: "detective_analyze" });
+    return res.status(403).json({
+      success: false,
+      error: "Value Boundary Access Denied: Machine token has expired or is invalid."
+    });
+  }
+
   try {
     const ai = getAiClient();
     

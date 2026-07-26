@@ -98,6 +98,7 @@ export default function AiDetective() {
   const [githubUrl, setGithubUrl] = useState<string>("");
   const [githubEmail, setGithubEmail] = useState<string>("");
   const [githubToken, setGithubToken] = useState<string>("");
+  const [machineToken, setMachineToken] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [forensicReport, setForensicReport] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -129,9 +130,14 @@ export default function AiDetective() {
     const targetUrl = customUrl !== undefined ? customUrl : githubUrl;
 
     try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (machineToken) {
+        headers["x-veklom-machine-token"] = machineToken;
+      }
+
       const res = await fetch("/api/detective/analyze", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ 
           query: promptText || "Analyze the forensic traffic signatures for the specified repository.", 
           githubUrl: targetUrl,
@@ -226,6 +232,20 @@ export default function AiDetective() {
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 font-mono outline-none focus:border-cyan-500"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-mono text-cyan-400 mb-1 flex items-center justify-between">
+                  <span>M2M MACHINE TOKEN</span>
+                  <span className="text-[8px] text-cyan-500/80">(REQUIRED FOR GATEWAY)</span>
+                </label>
+                <input
+                  type="password"
+                  value={machineToken}
+                  onChange={(e) => setMachineToken(e.target.value)}
+                  placeholder="vkm_token_..."
+                  className="w-full bg-cyan-950/20 border border-cyan-500/30 rounded-lg p-2.5 text-xs text-cyan-200 font-mono outline-none focus:border-cyan-400"
+                />
               </div>
             </div>
 
