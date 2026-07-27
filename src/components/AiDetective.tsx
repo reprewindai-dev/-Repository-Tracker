@@ -93,7 +93,8 @@ function renderFormattedText(text: string) {
   });
 }
 
-export default function AiDetective() {
+// ⚡ Bolt: Added React.memo to prevent unnecessary re-renders when parent polls without changes
+export default React.memo(function AiDetective() {
   const [query, setQuery] = useState<string>("");
   const [githubUrl, setGithubUrl] = useState<string>("");
   const [githubEmail, setGithubEmail] = useState<string>("");
@@ -420,4 +421,4 @@ export default function AiDetective() {
 
     </div>
   );
-}
+})

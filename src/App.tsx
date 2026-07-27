@@ -36,7 +36,7 @@ export default function App() {
   const [telemetryLogs, setTelemetryLogs] = useState<TelemetryLog[]>([]);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
-  const fetchServerState = async () => {
+  const fetchServerState = React.useCallback(async () => {
     try {
       const [machRes, meterRes, telRes] = await Promise.all([
         fetch("/api/identity/list"),
@@ -50,13 +50,14 @@ export default function App() {
         telRes.json()
       ]);
 
-      setMachines(machData);
-      setMeteringEvents(meterData);
-      setTelemetryLogs(telData);
+      // Optimize: Only set state if the data actually changed to prevent re-renders on poll
+      setMachines(prev => JSON.stringify(prev) === JSON.stringify(machData) ? prev : machData);
+      setMeteringEvents(prev => JSON.stringify(prev) === JSON.stringify(meterData) ? prev : meterData);
+      setTelemetryLogs(prev => JSON.stringify(prev) === JSON.stringify(telData) ? prev : telData);
     } catch (err) {
       console.error("Failed to load server state:", err);
     }
-  };
+  }, []);
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
@@ -69,7 +70,9 @@ export default function App() {
     fetchServerState();
     const interval = setInterval(fetchServerState, 4000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchServerState]);
+
+  const activeSimulatedTab = React.useCallback(() => setActiveTab('simulator'), []);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
@@ -205,7 +208,7 @@ export default function App() {
                   meteringEvents={meteringEvents} 
                   telemetryLogs={telemetryLogs} 
                   onRefresh={fetchServerState} 
-                  activeSimulatedTab={() => setActiveTab('simulator')}
+                  activeSimulatedTab={activeSimulatedTab}
                 />
               </motion.div>
             )}
