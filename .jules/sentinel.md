@@ -12,3 +12,8 @@
 **Vulnerability:** The `/api/metering/record` endpoint was completely unauthenticated, allowing any client to create metering events on behalf of other installations or workspaces without verifying machine identity.
 **Learning:** Even internal endpoints or capabilities mapped via a "gateway" need direct endpoint validation if they are exposed directly.
 **Prevention:** Always enforce machine token validation on all value-boundary or state-modifying endpoints (especially metering/billing).
+
+## 2024-05-31 - [IDOR in Metering Endpoint]
+**Vulnerability:** The `/api/metering/record` endpoint verified the `x-veklom-machine-token` but blindly trusted the `installation_id` from the request body. This allowed a machine with a valid token to submit metering records on behalf of any other `installation_id`.
+**Learning:** Authentication (who you are) is not Authorization (what you are allowed to do). Even if a request is authenticated, we must verify that the authenticated identity owns or has access to the resource they are acting upon (in this case, their own installation_id).
+**Prevention:** Always validate that the authenticated entity has permission to interact with the objects referenced in their request, preventing Insecure Direct Object Reference (IDOR).
