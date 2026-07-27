@@ -28,7 +28,8 @@ interface ClientSimulatorProps {
   onEventTriggered: () => void;
 }
 
-export default function ClientSimulator({ onEventTriggered }: ClientSimulatorProps) {
+// ⚡ Bolt: Wrapped in React.memo to prevent unnecessary re-renders when parent state updates but this prop hasn't changed
+const ClientSimulator = React.memo(function ClientSimulator({ onEventTriggered }: ClientSimulatorProps) {
   // Stages states
   const [activeStep, setActiveStep] = useState<number>(1);
   const [consoleLogs, setConsoleLogs] = useState<string[]>([
@@ -581,4 +582,6 @@ export default function ClientSimulator({ onEventTriggered }: ClientSimulatorPro
 
     </div>
   );
-}
+});
+
+export default ClientSimulator;
