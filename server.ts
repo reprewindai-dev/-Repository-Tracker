@@ -256,6 +256,15 @@ app.post("/api/metering/record", (req, res) => {
     });
   }
 
+  // 🛡️ Sentinel: Enforce IDOR protection. Ensure the machine is only recording events for its own installation_id.
+  if (machine.installation_id !== installation_id) {
+    emitTelemetry("gateway.error", { error: "Authorization Bypass Attempted (IDOR)", token, installation_id, capability });
+    return res.status(403).json({
+      error: "Value Boundary Authorization Denied",
+      reason: "Machine identity does not match the provided installation_id."
+    });
+  }
+
   const targetCap = CAPABILITIES.find(c => c.id === capability);
   const unit_price = targetCap ? targetCap.price_usd : 0.01;
 
