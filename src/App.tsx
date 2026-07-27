@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   TrendingUp, 
@@ -36,7 +36,7 @@ export default function App() {
   const [telemetryLogs, setTelemetryLogs] = useState<TelemetryLog[]>([]);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
-  const fetchServerState = async () => {
+  const fetchServerState = useCallback(async () => {
     try {
       const [machRes, meterRes, telRes] = await Promise.all([
         fetch("/api/identity/list"),
@@ -50,26 +50,34 @@ export default function App() {
         telRes.json()
       ]);
 
-      setMachines(machData);
-      setMeteringEvents(meterData);
-      setTelemetryLogs(telData);
+      // ⚡ Bolt: Prevent Unnecessary Re-renders
+      // Polling updates often return unchanged data. Using JSON.stringify
+      // allows us to avoid setting new state references unless data actually changed,
+      // saving significant re-render cycles across the entire component tree.
+      setMachines(prev => JSON.stringify(prev) === JSON.stringify(machData) ? prev : machData);
+      setMeteringEvents(prev => JSON.stringify(prev) === JSON.stringify(meterData) ? prev : meterData);
+      setTelemetryLogs(prev => JSON.stringify(prev) === JSON.stringify(telData) ? prev : telData);
     } catch (err) {
       console.error("Failed to load server state:", err);
     }
-  };
+  }, []);
 
-  const handleManualRefresh = async () => {
+  const handleManualRefresh = useCallback(async () => {
     setIsRefreshing(true);
     await fetchServerState();
     setTimeout(() => setIsRefreshing(false), 800);
-  };
+  }, [fetchServerState]);
+
+  const handleActiveSimulatedTab = useCallback(() => {
+    setActiveTab('simulator');
+  }, []);
 
   // Fetch initial state and poll every 4 seconds to catch active simulated executions
   useEffect(() => {
     fetchServerState();
     const interval = setInterval(fetchServerState, 4000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchServerState]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
@@ -205,7 +213,7 @@ export default function App() {
                   meteringEvents={meteringEvents} 
                   telemetryLogs={telemetryLogs} 
                   onRefresh={fetchServerState} 
-                  activeSimulatedTab={() => setActiveTab('simulator')}
+                  activeSimulatedTab={handleActiveSimulatedTab}
                 />
               </motion.div>
             )}
