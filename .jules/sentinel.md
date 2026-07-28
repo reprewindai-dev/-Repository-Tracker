@@ -12,3 +12,8 @@
 **Vulnerability:** The `/api/metering/record` endpoint was completely unauthenticated, allowing any client to create metering events on behalf of other installations or workspaces without verifying machine identity.
 **Learning:** Even internal endpoints or capabilities mapped via a "gateway" need direct endpoint validation if they are exposed directly.
 **Prevention:** Always enforce machine token validation on all value-boundary or state-modifying endpoints (especially metering/billing).
+
+## 2024-06-03 - [IDOR in Metering Record Endpoint]
+**Vulnerability:** The `/api/metering/record` endpoint verified the machine token but used the `installation_id` and `workspace_id` from the unverified request body to record the event, allowing an authenticated machine to record metering events on behalf of other machines (IDOR).
+**Learning:** Authentication alone is not sufficient when endpoints accept direct object references (like installation IDs) in the request body. You must also verify authorization—that the authenticated entity owns or has permission to use the referenced objects.
+**Prevention:** Always validate that the object identifiers provided in the request body correspond to the authenticated user or machine identity (e.g., `machine.installation_id === req.body.installation_id`).
