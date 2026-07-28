@@ -256,6 +256,15 @@ app.post("/api/metering/record", (req, res) => {
     });
   }
 
+  // 🛡️ Sentinel: IDOR Fix - Verify that the token actually belongs to the provided installation
+  if (machine.installation_id !== installation_id || (workspace_id && machine.workspace_id !== workspace_id)) {
+    emitTelemetry("gateway.error", { error: "Unauthorized metering record attempt", token, installation_id });
+    return res.status(403).json({
+      error: "Value Boundary Access Denied",
+      reason: "Machine token does not match the requested installation."
+    });
+  }
+
   const targetCap = CAPABILITIES.find(c => c.id === capability);
   const unit_price = targetCap ? targetCap.price_usd : 0.01;
 
