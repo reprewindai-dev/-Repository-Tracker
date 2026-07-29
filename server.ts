@@ -256,6 +256,15 @@ app.post("/api/metering/record", (req, res) => {
     });
   }
 
+  // 🛡️ Sentinel: Enforce IDOR protection. Ensure token matches the requested installation_id.
+  if (machine.installation_id !== installation_id) {
+    emitTelemetry("gateway.error", { error: "Unauthorized metering record attempt (IDOR)", token, capability, installation_id });
+    return res.status(403).json({
+      error: "Value Boundary Access Denied",
+      reason: "Machine token does not match the provided installation ID."
+    });
+  }
+
   const targetCap = CAPABILITIES.find(c => c.id === capability);
   const unit_price = targetCap ? targetCap.price_usd : 0.01;
 
