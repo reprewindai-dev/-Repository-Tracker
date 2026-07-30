@@ -34,7 +34,7 @@ interface DashboardProps {
   activeSimulatedTab: () => void;
 }
 
-export default function Dashboard({ 
+export default React.memo(function Dashboard({
   machines, 
   meteringEvents, 
   telemetryLogs, 
@@ -912,4 +912,4 @@ export default function Dashboard({
       </div>
     </div>
   );
-}
+});
