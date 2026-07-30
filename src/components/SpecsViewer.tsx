@@ -19,7 +19,7 @@ import {
 import { CAPABILITIES } from '../data';
 
 export default function SpecsViewer() {
-  const [activeTab, setActiveTab] = useState<'discovery' | 'identity' | 'metering' | 'x402' | 'mtp'>('discovery');
+  const [activeTab, setActiveTab] = useState<'gateway' | 'monetization' | 'clone_report' | 'discovery' | 'identity' | 'metering' | 'x402' | 'mtp'>('gateway');
   const [copied, setCopied] = useState<boolean>(false);
 
   const handleCopy = (text: string) => {
@@ -29,6 +29,130 @@ export default function SpecsViewer() {
   };
 
   const specs = {
+    gateway: {
+      title: "M2M Gateway Architecture & User Flow Spec",
+      description: "Complete design for the Machine-to-Machine Gateway on /git-upload-pack. Requires ECDSA machine authentication, x402 micro-payment settlement, and Gnomledger blockchain traceability before repository clone access.",
+      json: `{
+  "gateway_architecture": {
+    "protocol": "M2M Gateway v2.0 (x402 Enabled)",
+    "target_endpoints": [
+      "/git-upload-pack",
+      "/git-receive-pack",
+      "/api/gateway/*"
+    ],
+    "authentication_layer": {
+      "mechanism": "ECDSA-secp256k1 Signed Machine Passports (VII)",
+      "token_header": "X-Veklom-Passport",
+      "oidc_support": "GitHub Actions OIDC JWT verification"
+    },
+    "blockchain_traceability": {
+      "ledger": "Gnomledger v2 (Solana/EVM Anchor Compatible)",
+      "hash_algorithm": "SHA-256 State Merkle Roots",
+      "immutable_logs": true
+    },
+    "machine_user_flow": [
+      "1. Autonomous Client sends HTTP GET /veklom-discovery.json to read endpoints and capability pricing.",
+      "2. Client POSTs hardware/runtime fingerprint to /api/identity/register to receive an ECDSA Machine Passport.",
+      "3. Client attempts git clone /git-upload-pack.",
+      "4. Gateway interceptor checks quota & passport. If quota exceeded, returns HTTP 402 Payment Required with x402 header.",
+      "5. Client completes micro-transaction ($0.002 - $0.10) or provides subscription credit token.",
+      "6. Gnomledger records transaction hash; Gateway unlocks /git-upload-pack and streams repository packfile."
+    ],
+    "backend_mechanisms": {
+      "metering_engine": "Veklom Runtime Metering (VRM)",
+      "rate_limiter": "Token bucket with IP + Client Fingerprint sliding window",
+      "audit_trail": "Machine Trail Protocol (MTP) telemetry log bus"
+    }
+  }
+}`,
+    },
+    monetization: {
+      title: "Comprehensive Monetization Strategy & Proposal",
+      description: "Full commercial model covering Pay-Per-Clone Analytics, Tiered Subscriptions, Automated System API Access, Market Intelligence Data Licensing, and Blockchain Micro-payments.",
+      json: `{
+  "monetization_strategy": {
+    "version": "2026.1",
+    "revenue_streams": {
+      "pay_per_clone_analytics": {
+        "model": "Metered micro-billing per automated git clone / fetch operation",
+        "pricing": {
+          "basic_fetch": "$0.002 / operation",
+          "deep_architecture_scan": "$0.01 / operation",
+          "full_security_audit": "$0.10 / operation"
+        },
+        "settlement_protocol": "x402 HTTP Payment Header + Gnomledger"
+      },
+      "subscription_tiers": {
+        "free": { "price_monthly_usd": 0, "daily_clone_quota": 100, "features": ["Basic discovery", "Public clone logging"] },
+        "developer": { "price_monthly_usd": 9, "daily_clone_quota": 5000, "features": ["ECDSA Machine Passports", "Basic MTP telemetry"] },
+        "fleet": { "price_monthly_usd": 49, "daily_clone_quota": 50000, "features": ["Gnomledger anchoring", "Live webhook triggers", "Priority API access"] },
+        "industrial": { "price_monthly_usd": 199, "daily_clone_quota": 500000, "features": ["Dedicated rate limits", "Market intelligence access", "Custom policy packs"] }
+      },
+      "automated_api_access": {
+        "target_users": "AI Agent Workspaces (Cursor, Windsurf, Claude Code), CI/CD Platforms (Coolify, Vercel)",
+        "rate_limits": "Up to 10,000 requests / minute with instant micro-token refills"
+      },
+      "market_intelligence_licensing": {
+        "description": "Anonymized aggregation of repository dependency trends, AI coding assistant clone frequencies, and software architecture health metrics.",
+        "licensed_to": "Venture capital, security researchers, enterprise tool vendors"
+      }
+    },
+    "blockchain_micropayment_proposal": {
+      "layer": "x402 Micropayment Header Standard",
+      "ledger_anchor": "Gnomledger SHA-256 state Merkle trees",
+      "transparency": "Public verifiable ledger proof for every transaction and capability run"
+    }
+  }
+}`,
+    },
+    clone_report: {
+      title: "20,000+ Clone Traffic Analysis & Bot Classification",
+      description: "Forensic breakdown of 20,000+ automated repository clones: origins, machine categories, hypothesized intent, and targeted technical stack.",
+      json: `{
+  "traffic_analysis_report": {
+    "total_clones_analyzed": 26224,
+    "unique_cloning_clients": 1481,
+    "average_clones_per_client": {
+      "frontend_repo": "29.5 clones/client (High repeat build automation)",
+      "backend_repo": "8.1 clones/client (Distributed machine sampling)"
+    },
+    "machine_bot_categorization": [
+      {
+        "category": "Ephemeral CI/CD Runners",
+        "share_percentage": 42.5,
+        "examples": ["GitHub Actions OIDC Runners", "GitLab CI", "Coolify / Vercel Build Nodes"],
+        "intent": "Automated compilation, preview environment hydration, branch validation"
+      },
+      {
+        "category": "AI Developer Workspace Agents",
+        "share_percentage": 36.0,
+        "examples": ["Cursor Agent Workspaces", "Windsurf IDE", "Claude Code CLI", "GitHub Copilot Workspace"],
+        "intent": "Continuous re-cloning on every edit to maintain fresh context and AST index"
+      },
+      {
+        "category": "Dependency & Security Scrapers",
+        "share_percentage": 15.2,
+        "examples": ["Dependabot Scanners", "Snyk Auditors", "Socket.dev Dependency Indexers"],
+        "intent": "Parsing package.json, inspecting /blob/main/docs/system_map.md, checking vulnerabilities"
+      },
+      {
+        "category": "Autonomous Market Scrapers",
+        "share_percentage": 6.3,
+        "examples": ["AI Code Pre-training Scrapers", "Competitive Architecture Profilers"],
+        "intent": "Mapping system layout and indexing proprietary M2M protocol code"
+      }
+    ],
+    "targeted_technologies": [
+      "TypeScript (ESM / Node.js 20+)",
+      "React 18 + Vite",
+      "Express REST API Gateway",
+      "Tailwind CSS v4",
+      "Google GenAI @google/genai SDK"
+    ],
+    "hypothesized_intent": "Autonomous systems aggressively pull the codebase to inspect system architecture definitions, index M2M payment headers, and run automated dry-compilations inside ephemeral sandbox containers."
+  }
+}`,
+    },
     discovery: {
       title: "veklom-discovery.json (v2.0)",
       description: "Exposes endpoints, microtransaction pricing, licensing, and quota metrics directly to incoming autonomous agents.",
@@ -236,7 +360,10 @@ export default function SpecsViewer() {
             }`}
           >
             <span className="text-xs font-bold font-mono">
-              {key === 'discovery' ? '📄 Discovery v2.0' :
+              {key === 'gateway' ? '⚡ M2M Gateway' :
+               key === 'monetization' ? '💰 Monetization Strategy' :
+               key === 'clone_report' ? '🔬 20k+ Clone Report' :
+               key === 'discovery' ? '📄 Discovery v2.0' :
                key === 'identity' ? '🔑 Passport VII' :
                key === 'metering' ? '📏 Metering VRM' :
                key === 'x402' ? '💎 Settle x402' : '📡 Trail MTP'}

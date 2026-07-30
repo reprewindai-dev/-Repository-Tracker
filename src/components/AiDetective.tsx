@@ -105,19 +105,19 @@ export default function AiDetective() {
   // Suggested pre-made investigative templates
   const templates = [
     {
-      title: "1. Complete Clone Forensic Run",
-      description: "Analyze clones vs visitors patterns to trace source of backend & frontend automated pulls.",
-      prompt: "Perform a deep, structural forensic scan of the clones. Who are they? Give a precise classification and breadcrumb reconstruction report."
+      title: "1. M2M Interaction Gateway & Blockchain Micro-Payments",
+      description: "Gateway architecture, ECDSA passports, Gnomledger blockchain traceability, and machine flow.",
+      prompt: "Design and detail a complete Machine-to-Machine (M2M) interaction gateway for GitHub repositories. Explain the authentication layer (ECDSA passports), blockchain traceability via Gnomledger/x402, machine user flow, and backend tracking/monetization mechanisms."
     },
     {
-      title: "2. M2M Monetization Blueprint",
-      description: "Map exact capability prices to the clones using the x402 protocol.",
-      prompt: "Show me a detailed business blueprint to convert the clone interest into recurring micro-payment streams using the x402 ledger and our discovery rules."
+      title: "2. Comprehensive Revenue & Monetization Strategy",
+      description: "Pay-per-clone analytics, subscription tiers, automated API access, and market intelligence licensing.",
+      prompt: "Provide a comprehensive monetization strategy for GitHub repository insights. Detail pay-per-clone analytics, subscription tiers, API access for autonomous agents, data licensing for market intelligence, and a blockchain micro-payment system proposal."
     },
     {
-      title: "3. system_map.md Audit Trace",
-      description: "Investigate why machines are aggressively inspecting system_map.md and how to protect it.",
-      prompt: "Analyze why autonomous systems are scraping /blob/main/docs/system_map.md and identify what technical signals they are looking for."
+      title: "3. 20,000+ Clone Traffic & Bot Classification Audit",
+      description: "Categorize 20k+ clones into CI runners, AI coding loops, scrapers, and targeted tech.",
+      prompt: "Analyze the 20,000+ GitHub clone traffic dataset. Identify traffic sources, categorize machine/bot types (CI runners, AI developer workspaces, dependency auditors), hypothesize intent behind system_map.md inspection, and list targeted technologies/languages."
     }
   ];
 
