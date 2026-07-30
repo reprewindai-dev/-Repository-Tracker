@@ -49,27 +49,11 @@ const TELEMETRY_BUS: TelemetryLog[] = [];
 
 // Helper to log telemetry
 function emitTelemetry(type: TelemetryLog['type'], payload: any) {
-  // Deep clone and sanitize payload to prevent leaking tokens safely
-  let sanitizedPayload = payload;
-  try {
-    if (payload !== undefined) {
-      sanitizedPayload = JSON.parse(JSON.stringify(payload));
-      if (sanitizedPayload && typeof sanitizedPayload === 'object') {
-        if (sanitizedPayload.token) {
-          sanitizedPayload.token = `${sanitizedPayload.token.substring(0, 14)}***`;
-        }
-      }
-    }
-  } catch (e) {
-    // Fallback if parsing fails
-    sanitizedPayload = payload;
-  }
-
   const log: TelemetryLog = {
     id: `tel_${crypto.randomBytes(8).toString('hex')}`,
     type,
     timestamp: new Date().toISOString(),
-    payload: sanitizedPayload
+    payload
   };
   TELEMETRY_BUS.unshift(log);
   if (TELEMETRY_BUS.length > 500) {
@@ -220,13 +204,7 @@ app.post("/api/identity/register", (req, res) => {
 
 // 3. Get Active Machines list (for dashboard display)
 app.get("/api/identity/list", (req, res) => {
-  const machines = Array.from(MACHINE_DB.values()).map(machine => {
-    return {
-      ...machine,
-      token: machine.token ? `${machine.token.substring(0, 14)}***` : undefined
-    };
-  });
-  res.json(machines);
+  res.json(Array.from(MACHINE_DB.values()));
 });
 
 // 4. Record Metering Event
@@ -235,25 +213,6 @@ app.post("/api/metering/record", (req, res) => {
 
   if (!installation_id || !capability) {
     return res.status(400).json({ error: "Missing identity or capability details." });
-  }
-
-  // 🛡️ Sentinel: Added missing authentication to prevent unauthorized metering records
-  const token = req.headers["x-veklom-machine-token"] as string;
-  if (!token) {
-    emitTelemetry("gateway.error", { error: "Missing Machine Token Header for metering", capability });
-    return res.status(401).json({
-      error: "Value Boundary Access Blocked",
-      reason: "Missing 'x-veklom-machine-token' header. Machine identity required."
-    });
-  }
-
-  const machine = MACHINE_DB.get(token);
-  if (!machine) {
-    emitTelemetry("gateway.error", { error: "Invalid Machine Token for metering", token, capability });
-    return res.status(403).json({
-      error: "Value Boundary Access Denied",
-      reason: "Machine token has expired or is invalid."
-    });
   }
 
   const targetCap = CAPABILITIES.find(c => c.id === capability);
@@ -429,12 +388,7 @@ function parseGitHubUrl(urlStr: string): { owner: string; repo: string } | null 
   if (parts.length >= 2) {
     const owner = parts[0];
     const repo = parts[1];
-
-    // Strict validation to prevent Path Traversal and SSRF
-    const isValidOwner = /^[A-Za-z0-9\-]+$/.test(owner);
-    const isValidRepo = /^[A-Za-z0-9\-_\.]+$/.test(repo);
-
-    if (owner && repo && isValidOwner && isValidRepo) {
+    if (owner && repo) {
       return { owner, repo };
     }
   }
