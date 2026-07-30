@@ -102,6 +102,9 @@ export default function App() {
 
           {/* Network System Badges */}
           <div className="flex flex-wrap items-center gap-2">
+            <div className="bg-amber-950/40 border border-amber-800/40 px-2.5 py-1 rounded-lg text-[10px] font-mono text-amber-300 flex items-center gap-1.5">
+              <span>🌐 <span className="font-semibold">Veklom Global SaaS Platform</span></span>
+            </div>
             <div className="bg-slate-900/60 border border-slate-800/80 px-2.5 py-1 rounded-lg text-[10px] font-mono text-slate-400 flex items-center gap-1.5">
               <Radio size={12} className="text-emerald-400 animate-pulse" />
               <span>Gnomledger: <span className="text-emerald-400 font-semibold">Online</span></span>

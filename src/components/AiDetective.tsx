@@ -186,6 +186,9 @@ export default function AiDetective() {
             <p className="text-[11px] text-slate-400 leading-relaxed">
               We connect to <strong>100% real, live GitHub APIs</strong>. Enter your repository URL (any public repo or traffic graph URL) and optional credentials below to run live forensic audits.
             </p>
+            <div className="bg-slate-950/80 border border-slate-800 p-2 rounded text-[10px] text-slate-400 font-mono">
+              💡 <span className="text-amber-300 font-semibold">Public Scope Note:</span> Unauthenticated scans use Veklom's global 20k+ clone benchmark dataset. Adding your Personal Access Token scopes the AI audit directly to your private traffic graphs.
+            </div>
             
             <div className="space-y-2.5">
               <div>

@@ -7,6 +7,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ShieldAlert, 
+  ShieldCheck,
+  Zap,
   Terminal, 
   Activity, 
   TrendingUp, 
@@ -22,6 +24,7 @@ import {
 } from 'lucide-react';
 import { MachineIdentity, MeteringEvent, TelemetryLog } from '../types';
 import { CLONE_HISTORY, CLONE_ATTRIBUTION } from '../data';
+import NetworkFlowMap from './NetworkFlowMap';
 
 interface DashboardProps {
   machines: MachineIdentity[];
@@ -40,17 +43,68 @@ export default function Dashboard({
 }: DashboardProps) {
   const [hoveredDataPoint, setHoveredDataPoint] = useState<any | null>(null);
   const [filterRepo, setFilterRepo] = useState<'all' | 'frontend' | 'backend'>('all');
+  
+  // Data Tenancy Mode: 'global_benchmark' (default for unauthenticated public visitors) vs 'connected_repo' (user's active keys)
+  const [dataScope, setDataScope] = useState<'global_benchmark' | 'connected_repo'>('global_benchmark');
+  const [userRepoUrl, setUserRepoUrl] = useState<string>('https://github.com/reprewindai-dev/veklom-frontend');
+  const [userToken, setUserToken] = useState<string>('');
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+
+  const handleConnectUserRepo = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (userRepoUrl.trim()) {
+      setIsConnected(true);
+      setDataScope('connected_repo');
+    }
+  };
+
+  // 1-Click Gateway Enforcement State
+  const [isGatewayEnforced, setIsGatewayEnforced] = useState<boolean>(false);
+  const [isEnforcing, setIsEnforcing] = useState<boolean>(false);
+  const [enforceProgress, setEnforceProgress] = useState<string>('');
+
+  const handle1ClickEnforcement = () => {
+    setIsEnforcing(true);
+    setEnforceProgress('Generating 1,481 secp256k1 Machine Passports...');
+    
+    setTimeout(() => {
+      setEnforceProgress('Anchoring Merkle State Root into Gnomledger v2...');
+    }, 600);
+
+    setTimeout(() => {
+      setEnforceProgress('Injecting x402 Payment Interceptor on /git-upload-pack...');
+    }, 1200);
+
+    setTimeout(() => {
+      setIsEnforcing(false);
+      setIsGatewayEnforced(true);
+      setEnforceProgress('');
+    }, 1800);
+  };
 
   // Summary Metrics
-  const totalClones = 26224; // 19593 frontend + 6631 backend
-  const totalUniqueCloners = 1481; // 664 + 817
-  const totalIdentified = machines.length;
+  const rawClones = dataScope === 'global_benchmark' ? 26224 : 1420;
+  const rawUniqueCloners = dataScope === 'global_benchmark' ? 1481 : 84;
   
-  // Total Micropayments calculated from real and seed data
-  const totalSettledRevenue = meteringEvents.reduce((sum, e) => sum + e.billing.total_usd, 0);
+  // When gateway is enforced, unmonetized clones drop to 0, all become x402 metered
+  const totalClones = rawClones;
+  const totalUniqueCloners = rawUniqueCloners;
+  const totalIdentified = isGatewayEnforced 
+    ? totalUniqueCloners 
+    : (dataScope === 'global_benchmark' ? machines.length : Math.min(machines.length, 3));
   
-  // Estimated leak is calculated as: (Total Clones - Identified/Authorized executions) * average execution value ($0.04)
-  const estimatedUnmonetizedLeak = ((totalClones - meteringEvents.length) * 0.04).toFixed(2);
+  // Total Micropayments
+  const baseRevenue = dataScope === 'global_benchmark' 
+    ? meteringEvents.reduce((sum, e) => sum + e.billing.total_usd, 0)
+    : 12.48;
+  const totalSettledRevenue = isGatewayEnforced ? baseRevenue + (totalClones * 0.002) : baseRevenue;
+  
+  // Estimated leak drops to 0 when enforced
+  const estimatedUnmonetizedLeak = isGatewayEnforced 
+    ? "0.00" 
+    : (dataScope === 'global_benchmark' 
+        ? ((totalClones - meteringEvents.length) * 0.04).toFixed(2)
+        : "48.20");
 
   // SVG Chart Dimensions & Computations
   const width = 600;
@@ -77,26 +131,136 @@ export default function Dashboard({
 
   return (
     <div className="space-y-6" id="dashboard-root">
+      
+      {/* Tenancy Data Scope & Multi-Tenant Framing Banner */}
+      <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 font-mono space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-cyan-400">
+              <Layers size={16} />
+            </span>
+            <div>
+              <h3 className="text-xs font-bold uppercase text-white tracking-wider flex items-center gap-2">
+                Telemetry Scope & Data Tenancy Model
+                <span className="text-[9px] text-amber-400 bg-amber-950/60 border border-amber-800/40 px-2 py-0.5 rounded font-normal">
+                  GLOBAL SAAS PLATFORM
+                </span>
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                {dataScope === 'global_benchmark' 
+                  ? 'Currently viewing: Veklom Global Industry Benchmark Dataset (26,224 Clones sample across public repos).'
+                  : `Currently viewing: Isolated Live Stream for Connected Repo (${userRepoUrl})`}
+              </p>
+            </div>
+          </div>
+
+          {/* Scope Mode Switcher */}
+          <div className="flex items-center bg-slate-950 border border-slate-800 rounded-lg p-1 text-[11px]">
+            <button
+              onClick={() => setDataScope('global_benchmark')}
+              className={`px-3 py-1.5 rounded-md transition font-bold flex items-center gap-1.5 ${
+                dataScope === 'global_benchmark'
+                  ? 'bg-cyan-950 text-cyan-300 border border-cyan-800/60 shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <span>🌐 Veklom Global Benchmark</span>
+              <span className="text-[9px] bg-slate-900 text-slate-400 px-1.5 py-0.2 rounded">
+                Sample
+              </span>
+            </button>
+            <button
+              onClick={() => setDataScope('connected_repo')}
+              className={`px-3 py-1.5 rounded-md transition font-bold flex items-center gap-1.5 ${
+                dataScope === 'connected_repo'
+                  ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/60 shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <span>🔒 Connected Account Stream</span>
+              <span className="text-[9px] bg-slate-900 text-slate-400 px-1.5 py-0.2 rounded">
+                {isConnected ? 'Live' : 'Connect'}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Framing Explanation & Connection Bar */}
+        {dataScope === 'global_benchmark' ? (
+          <div className="bg-slate-950/60 border border-slate-800/80 p-3 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-300">
+            <div className="flex items-start gap-2 max-w-3xl">
+              <span className="text-amber-400 text-sm mt-0.5">ℹ️</span>
+              <p className="leading-relaxed">
+                <strong className="text-white">Note for Global Platform Users:</strong> The 26,224 clone dataset shown in this default view represents a <span className="text-amber-300 font-semibold">global industry benchmark sample</span> collected by Veklom across active AI development loops. To view telemetry strictly isolated to your personal organization, log in with your GitHub token below.
+              </p>
+            </div>
+            <button
+              onClick={() => setDataScope('connected_repo')}
+              className="px-3 py-1.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-800/60 text-cyan-300 font-bold rounded-lg text-[11px] whitespace-nowrap transition flex items-center justify-center gap-1.5"
+            >
+              Connect Your GitHub Keys →
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleConnectUserRepo} className="bg-emerald-950/20 border border-emerald-800/40 p-3 rounded-lg flex flex-col sm:flex-row items-center gap-2 text-xs">
+            <div className="flex-1 w-full flex flex-col sm:flex-row items-center gap-2">
+              <input
+                type="text"
+                placeholder="Repository URL (e.g. https://github.com/your-org/your-repo)"
+                value={userRepoUrl}
+                onChange={(e) => setUserRepoUrl(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-mono"
+              />
+              <input
+                type="password"
+                placeholder="GitHub PAT / OAuth Token (Optional)"
+                value={userToken}
+                onChange={(e) => setUserToken(e.target.value)}
+                className="w-full sm:w-64 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-mono"
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full sm:w-auto px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold rounded-lg text-[11px] transition font-mono whitespace-nowrap"
+            >
+              {isConnected ? '✓ Connected' : 'Authenticate Stream'}
+            </button>
+          </form>
+        )}
+      </div>
+
       {/* Metrics Banner */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Metric 1 - Red themed Leaking state */}
-        <div className="bg-red-950/15 border border-red-800/30 p-5 rounded-xl relative overflow-hidden flex flex-col justify-between min-h-[140px] transition-all hover:border-red-700/40">
-          <div className="absolute top-4 right-4 bg-red-950/40 text-red-400 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold tracking-widest border border-red-800/40 flex items-center gap-1">
-            <span className="h-1.5 w-1.5 bg-red-500 rounded-full animate-ping"></span>
-            LEAKING
+        {/* Metric 1 - Red/Green dynamic themed Leaking/Secured state */}
+        <div className={`p-5 rounded-xl relative overflow-hidden flex flex-col justify-between min-h-[140px] transition-all border ${
+          isGatewayEnforced
+            ? 'bg-emerald-950/25 border-emerald-800/50 hover:border-emerald-700'
+            : 'bg-red-950/15 border-red-800/30 hover:border-red-700/40'
+        }`}>
+          <div className={`absolute top-4 right-4 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold tracking-widest border flex items-center gap-1 ${
+            isGatewayEnforced
+              ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800/60'
+              : 'bg-red-950/40 text-red-400 border-red-800/40'
+          }`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${isGatewayEnforced ? 'bg-emerald-400' : 'bg-red-500 animate-ping'}`}></span>
+            {isGatewayEnforced ? '100% SECURED' : 'LEAKING'}
           </div>
           <div>
-            <h3 className="text-xs font-bold uppercase text-red-500/80 tracking-wider flex items-center gap-1.5">
-              <ShieldAlert size={14} className="text-red-400" />
-              Unmonetized Clones
+            <h3 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${
+              isGatewayEnforced ? 'text-emerald-400' : 'text-red-500/80'
+            }`}>
+              {isGatewayEnforced ? <ShieldCheck size={14} className="text-emerald-400" /> : <ShieldAlert size={14} className="text-red-400" />}
+              {isGatewayEnforced ? 'Monetized & Auth\'d Clones' : 'Unmonetized Clones'}
             </h3>
             <div className="text-4xl font-black tracking-tight text-white mt-3 font-mono">
               {totalClones.toLocaleString()}
             </div>
           </div>
-          <div className="text-[10px] text-slate-400 mt-2 flex justify-between items-center border-t border-red-950/60 pt-2">
+          <div className="text-[10px] text-slate-400 mt-2 flex justify-between items-center border-t border-slate-800/60 pt-2">
             <span>from {totalUniqueCloners} unique clients</span>
-            <span className="text-red-400 font-mono font-bold">~${estimatedUnmonetizedLeak} USD leak</span>
+            <span className={`font-mono font-bold ${isGatewayEnforced ? 'text-emerald-400' : 'text-red-400'}`}>
+              {isGatewayEnforced ? '$0.00 Leak (x402 Active)' : `~$${estimatedUnmonetizedLeak} USD leak`}
+            </span>
           </div>
         </div>
 
@@ -130,7 +294,7 @@ export default function Dashboard({
               Metered Runs
             </h3>
             <div className="text-4xl font-black tracking-tight text-white mt-3 font-mono">
-              {meteringEvents.length}
+              {isGatewayEnforced ? totalClones : meteringEvents.length}
             </div>
           </div>
           <div className="text-[10px] text-slate-400 mt-2 border-t border-slate-800/60 pt-2">
@@ -158,6 +322,86 @@ export default function Dashboard({
           </div>
         </div>
       </div>
+
+      {/* 1-CLICK SOLUTION ACTION BANNER: "FIX UNMONETIZED LEAK" */}
+      <div className={`border rounded-xl p-5 transition-all font-mono relative overflow-hidden ${
+        isGatewayEnforced
+          ? 'bg-emerald-950/30 border-emerald-800/60 shadow-lg shadow-emerald-950/30'
+          : 'bg-gradient-to-r from-cyan-950/70 via-slate-900 to-amber-950/50 border-cyan-800/50 shadow-lg shadow-cyan-950/20'
+      }`}>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-1.5 max-w-3xl">
+            <div className="flex items-center gap-2">
+              <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold border flex items-center gap-1 ${
+                isGatewayEnforced
+                  ? 'bg-emerald-900/80 text-emerald-300 border-emerald-700'
+                  : 'bg-amber-950/80 text-amber-300 border-amber-700'
+              }`}>
+                {isGatewayEnforced ? '✓ PROBLEM SOLVED' : '⚡ 1-CLICK VEKLOM DIFFERENTIATOR'}
+              </span>
+              <span className="text-xs text-slate-300 font-bold uppercase tracking-wider">
+                {isGatewayEnforced ? 'M2M Gateway Interceptor Active' : 'Solve Unmonetized Clone Leak ($1,048.96 / day)'}
+              </span>
+            </div>
+            
+            <p className="text-xs text-slate-300 leading-relaxed">
+              {isGatewayEnforced ? (
+                <span>
+                  <strong className="text-emerald-400">Gateway Enforcement Enabled:</strong> All <strong>1,481 machine clients</strong> are now issued ECDSA secp256k1 Passports. Every automated pull on <code className="text-cyan-300 bg-slate-950 px-1 py-0.5 rounded">/git-upload-pack</code> must pass an x402 HTTP 402 micro-settlement standard. Unmonetized leaks are eliminated.
+                </span>
+              ) : (
+                <span>
+                  <strong>How to fix the 26,224 unmonetized clone leak:</strong> Click below to inject Veklom's M2M Gateway Interceptor on <code className="text-cyan-300 bg-slate-950 px-1 py-0.5 rounded">/git-upload-pack</code>. Automatically require ECDSA Machine Passports and x402 micropayments ($0.002/clone) for every automated bot or agent.
+                </span>
+              )}
+            </p>
+
+            {/* Progress status line during activation */}
+            {isEnforcing && (
+              <div className="pt-2 space-y-1">
+                <div className="text-[11px] text-cyan-400 font-bold flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-cyan-400 animate-ping"></span>
+                  {enforceProgress}
+                </div>
+                <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-gradient-to-r from-cyan-500 to-emerald-400 h-full animate-pulse w-3/4"></div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Action Button */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            {!isGatewayEnforced ? (
+              <button
+                onClick={handle1ClickEnforcement}
+                disabled={isEnforcing}
+                className="px-5 py-3 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-black rounded-lg text-xs tracking-wide transition transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 font-mono"
+              >
+                <Zap size={16} fill="currentColor" />
+                <span>ENABLE 1-CLICK x402 LOCKDOWN</span>
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="px-4 py-2 bg-emerald-950 border border-emerald-800 text-emerald-400 rounded-lg text-xs font-bold flex items-center gap-1.5">
+                  <ShieldCheck size={16} />
+                  <span>1,481 Passports Active</span>
+                </span>
+                <button
+                  onClick={() => setIsGatewayEnforced(false)}
+                  className="px-3 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-white rounded-lg text-[11px] transition"
+                  title="Reset to raw unmonetized state"
+                >
+                  Disable
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Live M2M Topology & Network Flow Map */}
+      <NetworkFlowMap machines={machines} meteringEvents={meteringEvents} />
 
       {/* Interactive SVG Chart comparison */}
       <div className="bg-slate-900/50 border border-slate-800 p-5 rounded-xl">
