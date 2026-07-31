@@ -50,9 +50,11 @@ export default function App() {
         telRes.json()
       ]);
 
-      setMachines(machData);
-      setMeteringEvents(meterData);
-      setTelemetryLogs(telData);
+      // ⚡ Bolt Optimization: Prevent continuous re-renders from 4-second polling
+      // by comparing new data with existing state. Skips state update if identical.
+      setMachines(prev => JSON.stringify(prev) === JSON.stringify(machData) ? prev : machData);
+      setMeteringEvents(prev => JSON.stringify(prev) === JSON.stringify(meterData) ? prev : meterData);
+      setTelemetryLogs(prev => JSON.stringify(prev) === JSON.stringify(telData) ? prev : telData);
     } catch (err) {
       console.error("Failed to load server state:", err);
     }
