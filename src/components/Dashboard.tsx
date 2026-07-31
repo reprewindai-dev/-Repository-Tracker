@@ -20,11 +20,15 @@ import {
   Clock,
   ExternalLink,
   ShieldAlert as AlertIcon,
-  Radio
+  Radio,
+  FileText,
+  Download
 } from 'lucide-react';
 import { MachineIdentity, MeteringEvent, TelemetryLog } from '../types';
 import { CLONE_HISTORY, CLONE_ATTRIBUTION } from '../data';
 import NetworkFlowMap from './NetworkFlowMap';
+import MonetizationGuard from './MonetizationGuard';
+import { generateAuditPdfReport } from '../utils/exportPdfReport';
 
 interface DashboardProps {
   machines: MachineIdentity[];
@@ -80,6 +84,18 @@ export default function Dashboard({
       setIsGatewayEnforced(true);
       setEnforceProgress('');
     }, 1800);
+  };
+
+  const handleExportPdf = () => {
+    generateAuditPdfReport({
+      repositoryUrl: userRepoUrl,
+      totalActivePassports: totalUniqueCloners,
+      totalClones,
+      settledRevenueUsd: totalSettledRevenue,
+      leakUsd: parseFloat(estimatedUnmonetizedLeak),
+      isGatewayEnforced,
+      machines
+    });
   };
 
   // Summary Metrics
@@ -154,33 +170,44 @@ export default function Dashboard({
             </div>
           </div>
 
-          {/* Scope Mode Switcher */}
-          <div className="flex items-center bg-slate-950 border border-slate-800 rounded-lg p-1 text-[11px]">
+          {/* Scope Mode Switcher & PDF Audit Export */}
+          <div className="flex flex-wrap items-center gap-2 text-[11px]">
+            <div className="flex items-center bg-slate-950 border border-slate-800 rounded-lg p-1">
+              <button
+                onClick={() => setDataScope('global_benchmark')}
+                className={`px-3 py-1.5 rounded-md transition font-bold flex items-center gap-1.5 ${
+                  dataScope === 'global_benchmark'
+                    ? 'bg-cyan-950 text-cyan-300 border border-cyan-800/60 shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <span>🌐 Veklom Global Benchmark</span>
+                <span className="text-[9px] bg-slate-900 text-slate-400 px-1.5 py-0.2 rounded">
+                  Sample
+                </span>
+              </button>
+              <button
+                onClick={() => setDataScope('connected_repo')}
+                className={`px-3 py-1.5 rounded-md transition font-bold flex items-center gap-1.5 ${
+                  dataScope === 'connected_repo'
+                    ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/60 shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <span>🔒 Connected Account Stream</span>
+                <span className="text-[9px] bg-slate-900 text-slate-400 px-1.5 py-0.2 rounded">
+                  {isConnected ? 'Live' : 'Connect'}
+                </span>
+              </button>
+            </div>
+
             <button
-              onClick={() => setDataScope('global_benchmark')}
-              className={`px-3 py-1.5 rounded-md transition font-bold flex items-center gap-1.5 ${
-                dataScope === 'global_benchmark'
-                  ? 'bg-cyan-950 text-cyan-300 border border-cyan-800/60 shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              onClick={handleExportPdf}
+              className="px-3 py-2 bg-slate-950 hover:bg-slate-800 border border-slate-700 text-slate-200 hover:text-white font-bold rounded-lg transition flex items-center gap-1.5 font-mono shadow-sm"
+              title="Export Technical Audit Compliance Report (.pdf)"
             >
-              <span>🌐 Veklom Global Benchmark</span>
-              <span className="text-[9px] bg-slate-900 text-slate-400 px-1.5 py-0.2 rounded">
-                Sample
-              </span>
-            </button>
-            <button
-              onClick={() => setDataScope('connected_repo')}
-              className={`px-3 py-1.5 rounded-md transition font-bold flex items-center gap-1.5 ${
-                dataScope === 'connected_repo'
-                  ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/60 shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <span>🔒 Connected Account Stream</span>
-              <span className="text-[9px] bg-slate-900 text-slate-400 px-1.5 py-0.2 rounded">
-                {isConnected ? 'Live' : 'Connect'}
-              </span>
+              <FileText size={14} className="text-cyan-400" />
+              <span>Export Audit PDF</span>
             </button>
           </div>
         </div>
@@ -382,11 +409,18 @@ export default function Dashboard({
                 <span>ENABLE 1-CLICK x402 LOCKDOWN</span>
               </button>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="px-4 py-2 bg-emerald-950 border border-emerald-800 text-emerald-400 rounded-lg text-xs font-bold flex items-center gap-1.5">
                   <ShieldCheck size={16} />
                   <span>1,481 Passports Active</span>
                 </span>
+                <button
+                  onClick={handleExportPdf}
+                  className="px-3 py-2 bg-cyan-950 hover:bg-cyan-900 border border-cyan-800 text-cyan-300 font-bold rounded-lg text-xs transition flex items-center gap-1.5"
+                >
+                  <Download size={14} />
+                  <span>Export Audit PDF</span>
+                </button>
                 <button
                   onClick={() => setIsGatewayEnforced(false)}
                   className="px-3 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-white rounded-lg text-[11px] transition"
@@ -399,6 +433,9 @@ export default function Dashboard({
           </div>
         </div>
       </div>
+
+      {/* Monetization Guard Feature - Unmonetized Clone Interceptor */}
+      <MonetizationGuard onGuardStateChange={(guarded) => setIsGatewayEnforced(guarded)} />
 
       {/* Live M2M Topology & Network Flow Map */}
       <NetworkFlowMap machines={machines} meteringEvents={meteringEvents} />
