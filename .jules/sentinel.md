@@ -1,0 +1,5 @@
+
+## 2024-08-01 - [Mask API Tokens in Public Dashboards]
+**Vulnerability:** Machine identity tokens (`vkm_token_***`), which are used directly for authorization against the `/api/gateway/:capability` endpoints, were being broadcasted entirely in the clear. Specifically, they were fully exposed by both the `/api/identity/list` HTTP endpoint and the `/api/telemetry/bus` telemetry array. These endpoints fed a dashboard application, inadvertently leaking valid credentials for the primary payment boundary to anyone viewing the dashboard.
+**Learning:** Returning entire entity objects directly from a state map (`MACHINE_DB.values()`) into JSON serialization is a major risk when those objects contain secrets. The lack of distinct internal models versus external serialized models (DTOs) caused this credential leak.
+**Prevention:** Always explicitly map or sanitize domain objects before returning them in API endpoints or sending them via event buses. Sensitive fields like keys, passwords, and tokens should be dropped or masked (e.g., `token: vkm_token_***c92d`) if required for UX correlation.
