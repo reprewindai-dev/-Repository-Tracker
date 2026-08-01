@@ -5,13 +5,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  TrendingUp, 
-  Terminal, 
-  Cpu, 
-  FileText, 
-  Layers, 
-  ShieldCheck, 
+import {
+  TrendingUp,
+  Terminal,
+  Cpu,
+  FileText,
+  Layers,
+  ShieldCheck,
   HelpCircle,
   Sparkles,
   RefreshCw,
@@ -29,7 +29,7 @@ import { MachineIdentity, MeteringEvent, TelemetryLog } from './types';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'detective' | 'simulator' | 'specs'>('dashboard');
-  
+
   // State from server
   const [machines, setMachines] = useState<MachineIdentity[]>([]);
   const [meteringEvents, setMeteringEvents] = useState<MeteringEvent[]>([]);
@@ -50,21 +50,9 @@ export default function App() {
         telRes.json()
       ]);
 
-      // ⚡ Bolt: Prevent unnecessary re-renders by only updating state if data changed
-      // Since child components are not memoized, setting state unnecessarily causes
-      // the entire tree to re-render every 4 seconds.
-      setMachines(prev =>
-        JSON.stringify(prev) !== JSON.stringify(machData) ? machData : prev
-      );
-
-      setMeteringEvents(prev =>
-        JSON.stringify(prev) !== JSON.stringify(meterData) ? meterData : prev
-      );
-
-      setTelemetryLogs(prev =>
-        JSON.stringify(prev) !== JSON.stringify(telData) ? telData : prev
-      );
-
+      setMachines(machData);
+      setMeteringEvents(meterData);
+      setTelemetryLogs(telData);
     } catch (err) {
       console.error("Failed to load server state:", err);
     }
@@ -85,11 +73,11 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
-      
+
       {/* Top Navigation / Status Header Bar */}
       <header className="border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          
+
           {/* Logo & title */}
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-emerald-400 p-0.5 flex items-center justify-center shadow-lg shadow-cyan-500/10">
@@ -125,7 +113,7 @@ export default function App() {
               <ShieldCheck size={12} className="text-cyan-400" />
               <span>Boundary Gate: <span className="text-cyan-400 font-semibold">Enforcing</span></span>
             </div>
-            <button 
+            <button
               onClick={handleManualRefresh}
               className="p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-slate-400 hover:text-white transition"
               title="Refresh State"
@@ -139,7 +127,7 @@ export default function App() {
 
       {/* Main Workspace Layout */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
-        
+
         {/* Core Workspace Header & Tab Selector */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-900 pb-4 gap-4">
           <div>
@@ -160,8 +148,8 @@ export default function App() {
             <button
               onClick={() => setActiveTab('dashboard')}
               className={`px-3 py-1.5 text-xs font-mono font-medium rounded-lg transition-all flex items-center gap-1.5 ${
-                activeTab === 'dashboard' 
-                  ? 'bg-slate-900 text-white shadow-sm border border-slate-800' 
+                activeTab === 'dashboard'
+                  ? 'bg-slate-900 text-white shadow-sm border border-slate-800'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -171,8 +159,8 @@ export default function App() {
             <button
               onClick={() => setActiveTab('detective')}
               className={`px-3 py-1.5 text-xs font-mono font-medium rounded-lg transition-all flex items-center gap-1.5 ${
-                activeTab === 'detective' 
-                  ? 'bg-slate-900 text-white shadow-sm border border-slate-800' 
+                activeTab === 'detective'
+                  ? 'bg-slate-900 text-white shadow-sm border border-slate-800'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -182,8 +170,8 @@ export default function App() {
             <button
               onClick={() => setActiveTab('simulator')}
               className={`px-3 py-1.5 text-xs font-mono font-medium rounded-lg transition-all flex items-center gap-1.5 ${
-                activeTab === 'simulator' 
-                  ? 'bg-slate-900 text-white shadow-sm border border-slate-800' 
+                activeTab === 'simulator'
+                  ? 'bg-slate-900 text-white shadow-sm border border-slate-800'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -193,8 +181,8 @@ export default function App() {
             <button
               onClick={() => setActiveTab('specs')}
               className={`px-3 py-1.5 text-xs font-mono font-medium rounded-lg transition-all flex items-center gap-1.5 ${
-                activeTab === 'specs' 
-                  ? 'bg-slate-900 text-white shadow-sm border border-slate-800' 
+                activeTab === 'specs'
+                  ? 'bg-slate-900 text-white shadow-sm border border-slate-800'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -215,11 +203,11 @@ export default function App() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.18 }}
               >
-                <Dashboard 
-                  machines={machines} 
-                  meteringEvents={meteringEvents} 
-                  telemetryLogs={telemetryLogs} 
-                  onRefresh={fetchServerState} 
+                <Dashboard
+                  machines={machines}
+                  meteringEvents={meteringEvents}
+                  telemetryLogs={telemetryLogs}
+                  onRefresh={fetchServerState}
                   activeSimulatedTab={() => setActiveTab('simulator')}
                 />
               </motion.div>
