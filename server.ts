@@ -93,7 +93,10 @@ const seedMachines = [
 
 seedMachines.forEach(m => {
   MACHINE_DB.set(m.token, m as MachineIdentity);
-  emitTelemetry("identity.registered", m);
+  emitTelemetry("identity.registered", {
+    ...m,
+    token: `vkm_token_***${m.token.slice(-4)}`
+  });
 });
 
 // Record some seed microtransactions
@@ -190,7 +193,10 @@ app.post("/api/identity/register", (req, res) => {
   };
 
   MACHINE_DB.set(token, newMachine);
-  emitTelemetry("identity.registered", newMachine);
+  emitTelemetry("identity.registered", {
+    ...newMachine,
+    token: `vkm_token_***${token.slice(-4)}`
+  });
 
   res.json({
     status: "registered",
@@ -204,7 +210,11 @@ app.post("/api/identity/register", (req, res) => {
 
 // 3. Get Active Machines list (for dashboard display)
 app.get("/api/identity/list", (req, res) => {
-  res.json(Array.from(MACHINE_DB.values()));
+  const sanitizedMachines = Array.from(MACHINE_DB.values()).map(machine => ({
+    ...machine,
+    token: `vkm_token_***${machine.token.slice(-4)}`
+  }));
+  res.json(sanitizedMachines);
 });
 
 // 4. Record Metering Event
