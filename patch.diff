@@ -1,0 +1,27 @@
+--- src/App.tsx
++++ src/App.tsx
+@@ -28,9 +28,21 @@
+         telRes.json()
+       ]);
+
+-      setMachines(machData);
+-      setMeteringEvents(meterData);
+-      setTelemetryLogs(telData);
++      // ⚡ Bolt: Prevent unnecessary re-renders by only updating state if data changed
++      // Since child components are not memoized, setting state unnecessarily causes
++      // the entire tree to re-render every 4 seconds.
++      setMachines(prev =>
++        JSON.stringify(prev) !== JSON.stringify(machData) ? machData : prev
++      );
++
++      setMeteringEvents(prev =>
++        JSON.stringify(prev) !== JSON.stringify(meterData) ? meterData : prev
++      );
++
++      setTelemetryLogs(prev =>
++        JSON.stringify(prev) !== JSON.stringify(telData) ? telData : prev
++      );
++
+     } catch (err) {
+       console.error("Failed to load server state:", err);
+     }

@@ -1,0 +1,3 @@
+## 2025-03-01 - Prevented Unnecessary Re-renders from Polling
+**Learning:** The React application uses a 4-second polling mechanism in the main App component (`fetchServerState`). Child components are NOT wrapped in `React.memo()`, and function props are NOT memoized with `useCallback()`. Setting state blindly on every poll causes continuous re-renders of the entire component tree, leading to performance bottlenecks.
+**Action:** Always verify if polled data has actually changed before calling state setters. Use `JSON.stringify` comparison or similar deep equality checks to prevent unnecessary state updates in this un-memoized architecture.
