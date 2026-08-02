@@ -93,7 +93,8 @@ const seedMachines = [
 
 seedMachines.forEach(m => {
   MACHINE_DB.set(m.token, m as MachineIdentity);
-  emitTelemetry("identity.registered", m);
+  const { token, ...machineWithoutToken } = m;
+  emitTelemetry("identity.registered", machineWithoutToken);
 });
 
 // Record some seed microtransactions
@@ -190,7 +191,8 @@ app.post("/api/identity/register", (req, res) => {
   };
 
   MACHINE_DB.set(token, newMachine);
-  emitTelemetry("identity.registered", newMachine);
+  const { token: _token, ...machineWithoutToken } = newMachine;
+  emitTelemetry("identity.registered", machineWithoutToken);
 
   res.json({
     status: "registered",
@@ -204,7 +206,10 @@ app.post("/api/identity/register", (req, res) => {
 
 // 3. Get Active Machines list (for dashboard display)
 app.get("/api/identity/list", (req, res) => {
-  res.json(Array.from(MACHINE_DB.values()));
+  res.json(Array.from(MACHINE_DB.values()).map(machine => {
+    const { token, ...machineWithoutToken } = machine;
+    return machineWithoutToken;
+  }));
 });
 
 // 4. Record Metering Event
@@ -278,7 +283,7 @@ app.post("/api/gateway/:capability", (req, res) => {
 
   const machine = MACHINE_DB.get(token);
   if (!machine) {
-    emitTelemetry("gateway.error", { error: "Invalid Machine Token", token, capability });
+    emitTelemetry("gateway.error", { error: "Invalid Machine Token", capability });
     return res.status(403).json({
       error: "Value Boundary Access Denied",
       reason: "Machine token has expired or is invalid.",

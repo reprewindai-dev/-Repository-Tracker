@@ -1,0 +1,4 @@
+## 2024-05-15 - [CRITICAL] Prevent Sensitive Token Leakage in Telemetry and API Responses
+**Vulnerability:** The machine `token` secret was being fully exposed in `identity.registered` telemetry payloads, the `gateway.error` invalid token logging event, and publicly returned via the `/api/identity/list` endpoint.
+**Learning:** Due to the implicit structure of logging and sending full objects (e.g., `res.json(Array.from(MACHINE_DB.values()))`), secrets inherently bound to internal state variables are very easily leaked unless explicitly sanitized.
+**Prevention:** Always use explicit destructuring or mapping functions to omit sensitive fields (like API tokens or keys) before passing internal state objects to telemetry buses, public APIs, or error logging middleware. Never log raw incoming token values on failed authentication attempts.
