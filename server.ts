@@ -93,7 +93,9 @@ const seedMachines = [
 
 seedMachines.forEach(m => {
   MACHINE_DB.set(m.token, m as MachineIdentity);
-  emitTelemetry("identity.registered", m);
+  // 🛡️ Sentinel: Sanitize machine identity to avoid leaking secrets (token) in telemetry
+  const { token, ...sanitizedMachine } = m;
+  emitTelemetry("identity.registered", sanitizedMachine);
 });
 
 // Record some seed microtransactions
@@ -190,7 +192,10 @@ app.post("/api/identity/register", (req, res) => {
   };
 
   MACHINE_DB.set(token, newMachine);
-  emitTelemetry("identity.registered", newMachine);
+
+  // 🛡️ Sentinel: Sanitize machine identity to avoid leaking secrets (token) in telemetry
+  const { token: _token, ...sanitizedMachine } = newMachine;
+  emitTelemetry("identity.registered", sanitizedMachine);
 
   res.json({
     status: "registered",
@@ -204,7 +209,12 @@ app.post("/api/identity/register", (req, res) => {
 
 // 3. Get Active Machines list (for dashboard display)
 app.get("/api/identity/list", (req, res) => {
-  res.json(Array.from(MACHINE_DB.values()));
+  // 🛡️ Sentinel: Sanitize machine list to avoid leaking secrets (token) in API response
+  const sanitizedMachines = Array.from(MACHINE_DB.values()).map(machine => {
+    const { token, ...sanitized } = machine;
+    return sanitized;
+  });
+  res.json(sanitizedMachines);
 });
 
 // 4. Record Metering Event
