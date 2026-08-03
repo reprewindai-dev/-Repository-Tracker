@@ -1,0 +1,3 @@
+## 2024-05-25 - Prevent Unnecessary Re-renders on Polling
+**Learning:** React component `App.tsx` has a 4-second polling mechanism using `useEffect` that continuously fetches state (`fetchServerState`). By default, setting state triggers a full-app re-render, even if the new state data is structurally identical to the current state. This causes continuous re-renders of the entire application and all child components (which are not wrapped in `React.memo()`), leading to a performance bottleneck.
+**Action:** Always wrap state updates originating from polling mechanisms with a structural equality check (like `JSON.stringify` comparison or a deep equal check) to only trigger state updates (and thus re-renders) when the underlying data has actually changed.
