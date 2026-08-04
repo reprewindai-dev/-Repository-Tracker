@@ -288,7 +288,9 @@ app.post("/api/gateway/:capability", (req, res) => {
 
   const machine = MACHINE_DB.get(token);
   if (!machine) {
-    emitTelemetry("gateway.error", { error: "Invalid Machine Token", token, capability });
+    // 🛡️ Sentinel: Sanitize invalid token to prevent accidental credential leakage in telemetry logs
+    const sanitizedToken = (token && token.length > 8) ? `${token.substring(0, 4)}...${token.substring(token.length - 4)}` : "***";
+    emitTelemetry("gateway.error", { error: "Invalid Machine Token", token: sanitizedToken, capability });
     return res.status(403).json({
       error: "Value Boundary Access Denied",
       reason: "Machine token has expired or is invalid.",
@@ -830,7 +832,8 @@ Provide a highly professional, visually structured Markdown report. Speak with d
     console.error("Gemini Detective API Error:", error);
     res.status(500).json({
       success: false,
-      error: error.message || "The M2M Detective is currently offline. Please configure your GEMINI_API_KEY in secrets."
+      // 🛡️ Sentinel: Fail securely - don't expose sensitive internal error details to the client
+      error: "The M2M Detective is currently offline. Please try again later or configure secrets."
     });
   }
 });
