@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ShieldAlert, 
@@ -38,7 +38,9 @@ interface DashboardProps {
   activeSimulatedTab: () => void;
 }
 
-export default function Dashboard({ 
+// ⚡ Bolt Optimization: Wrap Dashboard in React.memo to prevent re-renders when parent
+// (App) state changes that aren't related to this component (like simulator updates).
+const Dashboard = React.memo(function Dashboard({
   machines, 
   meteringEvents, 
   telemetryLogs, 
@@ -66,6 +68,11 @@ export default function Dashboard({
   const [isGatewayEnforced, setIsGatewayEnforced] = useState<boolean>(false);
   const [isEnforcing, setIsEnforcing] = useState<boolean>(false);
   const [enforceProgress, setEnforceProgress] = useState<string>('');
+
+  // ⚡ Bolt Optimization: Memoize the callback to prevent child MonetizationGuard from re-rendering
+  const handleGuardStateChange = useCallback((guarded: boolean) => {
+    setIsGatewayEnforced(guarded);
+  }, []);
 
   const handle1ClickEnforcement = () => {
     setIsEnforcing(true);
@@ -435,7 +442,7 @@ export default function Dashboard({
       </div>
 
       {/* Monetization Guard Feature - Unmonetized Clone Interceptor */}
-      <MonetizationGuard onGuardStateChange={(guarded) => setIsGatewayEnforced(guarded)} />
+      <MonetizationGuard onGuardStateChange={handleGuardStateChange} />
 
       {/* Live M2M Topology & Network Flow Map */}
       <NetworkFlowMap machines={machines} meteringEvents={meteringEvents} />
@@ -949,4 +956,6 @@ export default function Dashboard({
       </div>
     </div>
   );
-}
+});
+
+export default Dashboard;
