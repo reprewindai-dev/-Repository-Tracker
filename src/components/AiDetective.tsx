@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Terminal, 
@@ -101,6 +101,13 @@ export default function AiDetective() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [forensicReport, setForensicReport] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // ⚡ Bolt Optimization: Memoize the heavy markdown-to-DOM parsing
+  // This prevents the entire report from being re-parsed on every keystroke
+  // when the user types in the input fields while a report is visible.
+  const memoizedForensicReport = useMemo(() => {
+    return forensicReport ? formatForensicReport(forensicReport) : null;
+  }, [forensicReport]);
 
   // Suggested pre-made investigative templates
   const templates = [
@@ -410,7 +417,7 @@ export default function AiDetective() {
                   </div>
 
                   <div className="prose prose-invert max-w-none space-y-1 font-sans">
-                    {formatForensicReport(forensicReport)}
+                    {memoizedForensicReport}
                   </div>
                 </motion.div>
               )}
