@@ -568,7 +568,10 @@ function parseGitHubUrl(urlStr: string): { owner: string; repo: string } | null 
   if (parts.length >= 2) {
     const owner = parts[0];
     const repo = parts[1];
-    if (owner && repo) {
+
+    // 🛡️ Sentinel: Validate owner and repo against strict regex to prevent SSRF / Path Traversal
+    const validPattern = /^[a-zA-Z0-9_.-]+$/;
+    if (owner && repo && validPattern.test(owner) && validPattern.test(repo) && owner !== ".." && repo !== "..") {
       return { owner, repo };
     }
   }
