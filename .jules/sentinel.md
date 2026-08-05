@@ -7,3 +7,8 @@
 **Vulnerability:** Invalid authorization tokens submitted by users were logged directly to the public telemetry bus without redaction, potentially leaking accidentally pasted passwords or API keys.
 **Learning:** Even invalid or rejected inputs must be treated as sensitive and sanitized before logging, as users often paste incorrect credentials by mistake.
 **Prevention:** Always mask or redact authentication tokens in logs and telemetry, whether they are valid or invalid.
+
+## 2026-08-05 - Prevent Server-Side Request Forgery (SSRF) / Path Traversal in GitHub URL Parser
+**Vulnerability:** The application extracts 'owner' and 'repo' components from user-supplied GitHub URLs and interpolates them directly into internal HTTP requests (fetch) to api.github.com.
+**Learning:** When attackers provide path traversal payloads (e.g., '..'), the resulting constructed URL can resolve to unintended backend endpoints, bypassing security checks or accessing data outside the intended scope.
+**Prevention:** Strictly validate all parsed URL path components using a regex that permits only safe characters (e.g., '/^[a-zA-Z0-9_.-]+$/') and explicitly deny path traversal sequences like '..' before using them in internal requests.
