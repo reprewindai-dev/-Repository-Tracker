@@ -48,7 +48,9 @@ interface EdgeConnection {
   label: string;
 }
 
-export default function NetworkFlowMap({ machines, meteringEvents }: NetworkFlowMapProps) {
+// ⚡ Bolt Optimization: Wrap NetworkFlowMap in React.memo to prevent expensive re-renders
+// (calculating SVG paths) when the parent Dashboard updates local state (e.g., hovering tooltips).
+const NetworkFlowMap = React.memo(function NetworkFlowMap({ machines, meteringEvents }: NetworkFlowMapProps) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
   const [filterMode, setFilterMode] = useState<'all' | 'high_freq' | 'metered' | 'leaking'>('all');
@@ -736,4 +738,6 @@ export default function NetworkFlowMap({ machines, meteringEvents }: NetworkFlow
       </div>
     </div>
   );
-}
+});
+
+export default NetworkFlowMap;

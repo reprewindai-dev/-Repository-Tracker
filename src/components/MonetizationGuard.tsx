@@ -42,7 +42,9 @@ interface MonetizationGuardProps {
   onGuardStateChange?: (allGuarded: boolean) => void;
 }
 
-export default function MonetizationGuard({ onGuardStateChange }: MonetizationGuardProps) {
+// ⚡ Bolt Optimization: Wrap MonetizationGuard in React.memo to prevent this heavy UI
+// component from re-rendering when the parent Dashboard updates its local state.
+const MonetizationGuard = React.memo(function MonetizationGuard({ onGuardStateChange }: MonetizationGuardProps) {
   const [paths, setPaths] = useState<GuardPath[]>([
     {
       id: 'path_fe_git',
@@ -704,5 +706,7 @@ export default function MonetizationGuard({ onGuardStateChange }: MonetizationGu
 
     </div>
   );
-}
+});
+
+export default MonetizationGuard;
 
