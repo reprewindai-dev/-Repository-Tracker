@@ -309,17 +309,21 @@ const NetworkFlowMap = React.memo(function NetworkFlowMap({ machines, meteringEv
     return { x: 585, y: 105 + (index + 1) * step };
   };
 
-  const agentNodes = nodes.filter(n => n.type === 'agent');
-  const gatewayNodes = nodes.filter(n => n.type === 'gateway');
-  const repoNodes = nodes.filter(n => n.type === 'repo');
-
+  // ⚡ Bolt Optimization: Compute derived arrays (agentNodes, gatewayNodes, repoNodes) inside
+  // the useMemo callback. Previously, these were computed on every render, creating new array
+  // references that broke the useMemo dependency check and caused nodePosMap to recalculate
+  // on every hover/state change.
   const nodePosMap = useMemo(() => {
+    const agentNodes = nodes.filter(n => n.type === 'agent');
+    const gatewayNodes = nodes.filter(n => n.type === 'gateway');
+    const repoNodes = nodes.filter(n => n.type === 'repo');
+
     const map = new Map<string, { x: number; y: number }>();
     agentNodes.forEach((n, i) => map.set(n.id, getNodeCoordinates(n, i, agentNodes.length)));
     gatewayNodes.forEach((n, i) => map.set(n.id, getNodeCoordinates(n, i, gatewayNodes.length)));
     repoNodes.forEach((n, i) => map.set(n.id, getNodeCoordinates(n, i, repoNodes.length)));
     return map;
-  }, [agentNodes, gatewayNodes, repoNodes]);
+  }, [nodes]);
 
   const selectedNode = nodes.find(n => n.id === selectedNodeId);
 
