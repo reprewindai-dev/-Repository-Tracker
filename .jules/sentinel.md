@@ -7,3 +7,8 @@
 **Vulnerability:** Invalid authorization tokens submitted by users were logged directly to the public telemetry bus without redaction, potentially leaking accidentally pasted passwords or API keys.
 **Learning:** Even invalid or rejected inputs must be treated as sensitive and sanitized before logging, as users often paste incorrect credentials by mistake.
 **Prevention:** Always mask or redact authentication tokens in logs and telemetry, whether they are valid or invalid.
+
+## 2024-10-24 - SSRF and Path Traversal Risks from Unvalidated URL Parsing
+**Vulnerability:** When parsing external URLs (like GitHub repository URLs) to construct internal API requests, the extracted `owner` and `repo` components were not strictly validated, allowing potential path traversal (e.g. using `..`) or SSRF via malformed input.
+**Learning:** External user input parsed from URLs cannot be trusted, even if it looks like a standard format. It must be strictly validated before being used to construct internal filesystem paths or outgoing network requests.
+**Prevention:** Always apply strict allowlist validation (e.g., regex `/^[a-zA-Z0-9_.-]+$/`) and explicitly reject dangerous sequences like `..` on all parsed path components before using them.
