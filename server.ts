@@ -569,7 +569,12 @@ function parseGitHubUrl(urlStr: string): { owner: string; repo: string } | null 
     const owner = parts[0];
     const repo = parts[1];
     if (owner && repo) {
-      return { owner, repo };
+      // 🛡️ Sentinel: Strictly validate parsed URL components to prevent SSRF and path traversal
+      const isValidComponent = (comp: string) => /^[a-zA-Z0-9_.-]+$/.test(comp) && !comp.includes('..');
+
+      if (isValidComponent(owner) && isValidComponent(repo)) {
+        return { owner, repo };
+      }
     }
   }
   return null;
