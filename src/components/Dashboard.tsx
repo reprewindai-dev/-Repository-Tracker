@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ShieldAlert, 
@@ -135,22 +135,35 @@ const Dashboard = React.memo(function Dashboard({
   const padding = 25;
 
   const chartData = CLONE_ATTRIBUTION;
-  const maxClones = Math.max(...chartData.map(d => d.clones)) * 1.1;
 
-  const pointsClones = chartData.map((d, i) => {
-    const x = padding + (i * (width - 2 * padding)) / (chartData.length - 1);
-    const y = height - padding - (d.clones * (height - 2 * padding)) / maxClones;
-    return { x, y, ...d };
-  });
+  // ⚡ Bolt Optimization: Memoize the chart computations to prevent expensive array mapping
+  // on every re-render (which occurs frequently when hovering to update hoveredDataPoint).
+  const { maxClones, pointsClones, pointsKnown, pathClones, pathKnown } = useMemo(() => {
+    const calculatedMaxClones = Math.max(...chartData.map(d => d.clones)) * 1.1;
 
-  const pointsKnown = chartData.map((d, i) => {
-    const x = padding + (i * (width - 2 * padding)) / (chartData.length - 1);
-    const y = height - padding - (d.known * (height - 2 * padding)) / maxClones;
-    return { x, y, ...d };
-  });
+    const calculatedPointsClones = chartData.map((d, i) => {
+      const x = padding + (i * (width - 2 * padding)) / (chartData.length - 1);
+      const y = height - padding - (d.clones * (height - 2 * padding)) / calculatedMaxClones;
+      return { x, y, ...d };
+    });
 
-  const pathClones = pointsClones.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
-  const pathKnown = pointsKnown.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
+    const calculatedPointsKnown = chartData.map((d, i) => {
+      const x = padding + (i * (width - 2 * padding)) / (chartData.length - 1);
+      const y = height - padding - (d.known * (height - 2 * padding)) / calculatedMaxClones;
+      return { x, y, ...d };
+    });
+
+    const calculatedPathClones = calculatedPointsClones.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
+    const calculatedPathKnown = calculatedPointsKnown.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
+
+    return {
+      maxClones: calculatedMaxClones,
+      pointsClones: calculatedPointsClones,
+      pointsKnown: calculatedPointsKnown,
+      pathClones: calculatedPathClones,
+      pathKnown: calculatedPathKnown
+    };
+  }, [chartData, width, height, padding]);
 
   return (
     <div className="space-y-6" id="dashboard-root">
