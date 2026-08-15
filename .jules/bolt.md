@@ -5,3 +5,7 @@
 ## 2024-05-25 - React.memo() on Heavy Child Components
 **Learning:** In React applications with polling or frequent parent component state updates (like hovering over charts updating local state in `Dashboard.tsx`), failing to memoize heavy child components (like `NetworkFlowMap.tsx` and `MonetizationGuard.tsx` which compute expensive SVG paths or hold complex local state) causes cascading re-renders. This leads to severe UI performance degradation during interactions. Also, to effectively use `React.memo()`, callbacks passed as props to these child components must be wrapped in `useCallback()` to ensure referential stability.
 **Action:** Always wrap heavy child components in `React.memo()` and ensure that any functions passed to them as props are wrapped in `useCallback()` to prevent unnecessary re-renders when parent state changes.
+
+## 2024-05-25 - Derived arrays passed as dependencies to useMemo break memoization
+**Learning:** Derived arrays or objects created via `.filter()`, `.map()`, or `.reduce()` in the render body are passed as dependencies to `useMemo` (such as `nodePosMap` depending on `agentNodes`). Because these arrays get new referential identities on every render (e.g. local state changes), it breaks the memoization, causing unnecessary re-renders.
+**Action:** Always compute derived arrays or objects inside `useMemo` hooks when they are passed as dependencies to other `useMemo` hooks or `React.memo` components, to preserve referential equality and prevent breaking memoization.
