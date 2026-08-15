@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ShieldAlert, 
@@ -135,22 +135,27 @@ const Dashboard = React.memo(function Dashboard({
   const padding = 25;
 
   const chartData = CLONE_ATTRIBUTION;
-  const maxClones = Math.max(...chartData.map(d => d.clones)) * 1.1;
 
-  const pointsClones = chartData.map((d, i) => {
-    const x = padding + (i * (width - 2 * padding)) / (chartData.length - 1);
-    const y = height - padding - (d.clones * (height - 2 * padding)) / maxClones;
-    return { x, y, ...d };
-  });
+  const { pointsClones, pointsKnown, pathClones, pathKnown } = useMemo(() => {
+    const maxClones = Math.max(...chartData.map(d => d.clones)) * 1.1;
 
-  const pointsKnown = chartData.map((d, i) => {
-    const x = padding + (i * (width - 2 * padding)) / (chartData.length - 1);
-    const y = height - padding - (d.known * (height - 2 * padding)) / maxClones;
-    return { x, y, ...d };
-  });
+    const pClones = chartData.map((d, i) => {
+      const x = padding + (i * (width - 2 * padding)) / (chartData.length - 1);
+      const y = height - padding - (d.clones * (height - 2 * padding)) / maxClones;
+      return { x, y, ...d };
+    });
 
-  const pathClones = pointsClones.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
-  const pathKnown = pointsKnown.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
+    const pKnown = chartData.map((d, i) => {
+      const x = padding + (i * (width - 2 * padding)) / (chartData.length - 1);
+      const y = height - padding - (d.known * (height - 2 * padding)) / maxClones;
+      return { x, y, ...d };
+    });
+
+    const pathC = pClones.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
+    const pathK = pKnown.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
+
+    return { pointsClones: pClones, pointsKnown: pKnown, pathClones: pathC, pathKnown: pathK };
+  }, [chartData, height, width, padding]);
 
   return (
     <div className="space-y-6" id="dashboard-root">
