@@ -20,6 +20,15 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
+// 🛡️ Sentinel: Disable X-Powered-By to prevent information leakage and add security headers
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  next();
+});
+
 const PORT = 3000;
 
 // Lazy initialization of Gemini client to prevent crash on startup if key is missing
