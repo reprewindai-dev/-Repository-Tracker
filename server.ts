@@ -18,6 +18,8 @@ import { CAPABILITIES } from "./src/data.js";
 dotenv.config();
 
 const app = express();
+// 🛡️ Sentinel: Remove X-Powered-By header to prevent information leakage
+app.disable('x-powered-by');
 app.use(express.json());
 
 const PORT = 3000;
@@ -508,6 +510,8 @@ const crypto = require('crypto');
 const http = require('http');
 
 const app = express();
+// 🛡️ Sentinel: Remove X-Powered-By header to prevent information leakage
+app.disable('x-powered-by');
 const PORT = process.env.X402_PORT || 4020;
 const VEKLOM_LEDGER_URL = process.env.VEKLOM_LEDGER_URL || 'https://ais-dev-dno6djrkv6xjqotkxgsuem-660497169011.us-east1.run.app/api/x402/verify-passport';
 
