@@ -134,23 +134,35 @@ const Dashboard = React.memo(function Dashboard({
   const height = 180;
   const padding = 25;
 
-  const chartData = CLONE_ATTRIBUTION;
-  const maxClones = Math.max(...chartData.map(d => d.clones)) * 1.1;
+  // ⚡ Bolt Optimization: Memoize expensive SVG path calculations to prevent
+  // recalculation on every local state change (e.g. hover events).
+  const { chartData, pointsClones, pointsKnown, pathClones, pathKnown } = React.useMemo(() => {
+    const data = CLONE_ATTRIBUTION;
+    const maxClones = Math.max(...data.map(d => d.clones)) * 1.1;
 
-  const pointsClones = chartData.map((d, i) => {
-    const x = padding + (i * (width - 2 * padding)) / (chartData.length - 1);
-    const y = height - padding - (d.clones * (height - 2 * padding)) / maxClones;
-    return { x, y, ...d };
-  });
+    const computedPointsClones = data.map((d, i) => {
+      const x = padding + (i * (width - 2 * padding)) / (data.length - 1);
+      const y = height - padding - (d.clones * (height - 2 * padding)) / maxClones;
+      return { x, y, ...d };
+    });
 
-  const pointsKnown = chartData.map((d, i) => {
-    const x = padding + (i * (width - 2 * padding)) / (chartData.length - 1);
-    const y = height - padding - (d.known * (height - 2 * padding)) / maxClones;
-    return { x, y, ...d };
-  });
+    const computedPointsKnown = data.map((d, i) => {
+      const x = padding + (i * (width - 2 * padding)) / (data.length - 1);
+      const y = height - padding - (d.known * (height - 2 * padding)) / maxClones;
+      return { x, y, ...d };
+    });
 
-  const pathClones = pointsClones.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
-  const pathKnown = pointsKnown.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
+    const computedPathClones = computedPointsClones.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
+    const computedPathKnown = computedPointsKnown.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
+
+    return {
+      chartData: data,
+      pointsClones: computedPointsClones,
+      pointsKnown: computedPointsKnown,
+      pathClones: computedPathClones,
+      pathKnown: computedPathKnown
+    };
+  }, [width, height, padding]);
 
   return (
     <div className="space-y-6" id="dashboard-root">
