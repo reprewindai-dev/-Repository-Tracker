@@ -9,3 +9,7 @@
 ## 2024-05-25 - useMemo for Derived Data in Render Body
 **Learning:** In this React application, components like `Dashboard.tsx` recalculate derived arrays and objects (such as SVG chart dimensions using `.map()` and `.reduce()`) in the render body. Because these components are heavily memoized using `React.memo` and receive frequent state updates (e.g., via polling or local hover states), redefining these derived structures without `useMemo` breaks local reference stability, causing unnecessary re-renders on local state changes.
 **Action:** Always compute derived arrays or objects inside `useMemo` hooks. Ensure all referenced local variables (like width, height, or padding) are included in the dependency array to satisfy exhaustive-deps rules and prevent stale closures.
+
+## 2024-05-25 - React.memo() array filter stability
+**Learning:** In components like `NetworkFlowMap.tsx`, computing derived arrays (like `nodes.filter(...)`) immediately outside of `useMemo` hooks invalidates dependency arrays because the `.filter()` operation returns a new array reference on every single render. This forces the `useMemo` hook to recalculate regardless of whether the actual data changed, completely defeating its purpose.
+**Action:** Always place `.filter()`, `.map()`, and `.reduce()` operations for derived state **inside** the `useMemo` hook itself to maintain referential stability.
