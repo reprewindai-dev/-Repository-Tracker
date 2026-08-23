@@ -117,9 +117,9 @@ const Dashboard = React.memo(function Dashboard({
     : (dataScope === 'global_benchmark' ? machines.length : Math.min(machines.length, 3));
   
   // Total Micropayments
-  const baseRevenue = dataScope === 'global_benchmark' 
+  const baseRevenue = React.useMemo(() => dataScope === 'global_benchmark'
     ? meteringEvents.reduce((sum, e) => sum + e.billing.total_usd, 0)
-    : 12.48;
+    : 12.48, [dataScope, meteringEvents]);
   const totalSettledRevenue = isGatewayEnforced ? baseRevenue + (totalClones * 0.002) : baseRevenue;
   
   // Estimated leak drops to 0 when enforced
