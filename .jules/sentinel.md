@@ -17,3 +17,8 @@
 **Vulnerability:** The application was exposing the `X-Powered-By: Express` header in HTTP responses. While a standard feature of Express, this leaks information about the backend technology stack.
 **Learning:** Generic headers like `X-Powered-By` can assist attackers in profiling the server and targeting known vulnerabilities in specific framework versions. While often considered a low-severity issue, it's a quick and important defense-in-depth measure. Note that Express populates this header natively during response execution, so `res.removeHeader('X-Powered-By')` inside middleware is ineffective.
 **Prevention:** Always explicitly disable the header at the application level using `app.disable('x-powered-by');` when initializing an Express instance.
+
+## 2024-10-25 - Prevent Node.js Event Loop Blocking (DoS) from Synchronous Crypto
+**Vulnerability:** The API endpoint `/api/ops/issue-passports` generated multiple ECDSA key pairs using the synchronous `crypto.generateKeyPairSync` function inside a loop. Since Node.js runs on a single thread, synchronous cryptographic operations completely block the Event Loop, causing a Denial of Service (DoS) for all other incoming requests until the keys are generated.
+**Learning:** Cryptographic key generation is CPU-intensive. Performing these operations synchronously in an Express route handler makes the entire server unresponsive, turning a simple feature into a critical DoS vulnerability.
+**Prevention:** Always use asynchronous, non-blocking cryptographic functions (e.g., `crypto.generateKeyPair` wrapped in a Promise or `util.promisify(crypto.generateKeyPair)`) when generating keys or performing heavy crypto within a request context.
