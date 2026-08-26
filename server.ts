@@ -8,6 +8,7 @@ import path from "path";
 import fs from "fs";
 import crypto from "crypto";
 import os from "os";
+import { promisify } from "util";
 import dotenv from "dotenv";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
@@ -456,43 +457,55 @@ app.post("/api/x402/verify-passport", (req, res) => {
   }
 });
 
+const generateKeyPairAsync = promisify(crypto.generateKeyPair);
+
 // 9. Batch ECDSA Machine Passport Generator for veklom-ops-command
-app.post("/api/ops/issue-passports", (req, res) => {
+app.post("/api/ops/issue-passports", async (req, res) => {
   const { count = 1481, repository = "reprewindai-dev/veklom-frontend" } = req.body;
 
   const issuedPassports = [];
   const sampleCount = Math.min(count, 50); // generate top 50 in full detail for performance
 
-  for (let i = 0; i < sampleCount; i++) {
-    const { publicKey, privateKey } = crypto.generateKeyPairSync("ec", {
-      namedCurve: "secp256k1",
-      publicKeyEncoding: { type: "spki", format: "pem" },
-      privateKeyEncoding: { type: "pkcs8", format: "pem" }
-    });
+  try {
+    const keyPairPromises = Array.from({ length: sampleCount }).map(() =>
+      generateKeyPairAsync("ec", {
+        namedCurve: "secp256k1",
+        publicKeyEncoding: { type: "spki", format: "pem" },
+        privateKeyEncoding: { type: "pkcs8", format: "pem" }
+      })
+    );
 
-    const clientId = `m2m_client_${crypto.randomBytes(6).toString("hex")}`;
-    const pubKeyHash = crypto.createHash("sha256").update(publicKey).digest("hex").substring(0, 32);
+    const keyPairs = await Promise.all(keyPairPromises);
 
-    issuedPassports.push({
-      client_id: clientId,
+    for (let i = 0; i < sampleCount; i++) {
+      const { publicKey, privateKey } = keyPairs[i];
+
+      const clientId = `m2m_client_${crypto.randomBytes(6).toString("hex")}`;
+      const pubKeyHash = crypto.createHash("sha256").update(publicKey).digest("hex").substring(0, 32);
+
+      issuedPassports.push({
+        client_id: clientId,
+        repository,
+        algorithm: "ECDSA_SECP256K1",
+        public_key_hash: `0x${pubKeyHash}`,
+        passport_token: `x402_pass_${Buffer.from(JSON.stringify({ id: clientId, pub: pubKeyHash, exp: Date.now() + 31536000000 })).toString("base64")}`,
+        created_at: new Date().toISOString()
+      });
+    }
+
+    res.json({
+      success: true,
       repository,
-      algorithm: "ECDSA_SECP256K1",
-      public_key_hash: `0x${pubKeyHash}`,
-      passport_token: `x402_pass_${Buffer.from(JSON.stringify({ id: clientId, pub: pubKeyHash, exp: Date.now() + 31536000000 })).toString("base64")}`,
-      created_at: new Date().toISOString()
+      total_requested: count,
+      total_issued: count,
+      active_passports_count: count,
+      sample_issued_passports: issuedPassports,
+      ops_repo: "https://github.com/reprewindai-dev/veklom-ops-command",
+      instructions: "Run 'npx veklom-ops-command enforce' in your ops pipeline to bind these passports to your reverse proxy."
     });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to issue machine passports." });
   }
-
-  res.json({
-    success: true,
-    repository,
-    total_requested: count,
-    total_issued: count,
-    active_passports_count: count,
-    sample_issued_passports: issuedPassports,
-    ops_repo: "https://github.com/reprewindai-dev/veklom-ops-command",
-    instructions: "Run 'npx veklom-ops-command enforce' in your ops pipeline to bind these passports to your reverse proxy."
-  });
 });
 
 // 10. Executable x402 Gateway Interceptor Deployment Script Generator for veklom-ops-command
