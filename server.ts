@@ -7,6 +7,7 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
+import util from "util";
 import os from "os";
 import dotenv from "dotenv";
 import { createServer as createViteServer } from "vite";
@@ -457,14 +458,17 @@ app.post("/api/x402/verify-passport", (req, res) => {
 });
 
 // 9. Batch ECDSA Machine Passport Generator for veklom-ops-command
-app.post("/api/ops/issue-passports", (req, res) => {
+app.post("/api/ops/issue-passports", async (req, res) => {
   const { count = 1481, repository = "reprewindai-dev/veklom-frontend" } = req.body;
 
   const issuedPassports = [];
   const sampleCount = Math.min(count, 50); // generate top 50 in full detail for performance
 
+  const generateKeyPairAsync = util.promisify(crypto.generateKeyPair);
+
   for (let i = 0; i < sampleCount; i++) {
-    const { publicKey, privateKey } = crypto.generateKeyPairSync("ec", {
+    // 🛡️ Sentinel: Use async generateKeyPair to prevent blocking the Node.js Event Loop (DoS risk)
+    const { publicKey, privateKey } = await generateKeyPairAsync("ec", {
       namedCurve: "secp256k1",
       publicKeyEncoding: { type: "spki", format: "pem" },
       privateKeyEncoding: { type: "pkcs8", format: "pem" }
