@@ -105,11 +105,17 @@ const MonetizationGuard = React.memo(function MonetizationGuard({ onGuardStateCh
   const [copiedScript, setCopiedScript] = useState<boolean>(false);
 
   // Compute stats
-  const totalUnmonetized = paths.filter(p => p.status === 'unmonetized').reduce((acc, p) => acc + p.unmonetizedClones, 0);
-  const totalLeakUsd = paths.filter(p => p.status === 'unmonetized').reduce((acc, p) => acc + p.estDailyLeakUsd, 0);
-  const monetizedCount = paths.filter(p => p.status === 'monetized').length;
-  const totalPaths = paths.length;
-  const isAllMonetized = monetizedCount === totalPaths;
+  // ⚡ Bolt Optimization: Memoize derived stats to prevent recalculations on every local state change
+  const { totalUnmonetized, totalLeakUsd, monetizedCount, totalPaths, isAllMonetized } = React.useMemo(() => {
+    const unmonetizedPaths = paths.filter(p => p.status === 'unmonetized');
+    const totalUnmonetized = unmonetizedPaths.reduce((acc, p) => acc + p.unmonetizedClones, 0);
+    const totalLeakUsd = unmonetizedPaths.reduce((acc, p) => acc + p.estDailyLeakUsd, 0);
+    const monetizedCount = paths.filter(p => p.status === 'monetized').length;
+    const totalPaths = paths.length;
+    const isAllMonetized = monetizedCount === totalPaths;
+
+    return { totalUnmonetized, totalLeakUsd, monetizedCount, totalPaths, isAllMonetized };
+  }, [paths]);
 
   // Single Path Enable
   const handleEnablePath = (id: string) => {

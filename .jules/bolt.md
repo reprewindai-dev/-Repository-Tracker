@@ -9,3 +9,7 @@
 ## 2024-05-25 - useMemo for Derived Data in Render Body
 **Learning:** In this React application, components like `Dashboard.tsx` recalculate derived arrays and objects (such as SVG chart dimensions using `.map()` and `.reduce()`) in the render body. Because these components are heavily memoized using `React.memo` and receive frequent state updates (e.g., via polling or local hover states), redefining these derived structures without `useMemo` breaks local reference stability, causing unnecessary re-renders on local state changes.
 **Action:** Always compute derived arrays or objects inside `useMemo` hooks. Ensure all referenced local variables (like width, height, or padding) are included in the dependency array to satisfy exhaustive-deps rules and prevent stale closures.
+
+## 2024-05-25 - useMemo for Derived Data in MonetizationGuard Render Body
+**Learning:** In the `MonetizationGuard` component, calculations for variables like `totalUnmonetized` and `totalLeakUsd` using `.filter()` and `.reduce()` inside the render body were causing unnecessary recalculations on local state changes (e.g. toggling modals), despite the component itself being heavily memoized via `React.memo`.
+**Action:** Always compute derived array structures and aggregated states in a component via `useMemo` hooks, specifying all references appropriately, even for localized calculations.
