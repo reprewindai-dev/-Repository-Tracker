@@ -293,33 +293,34 @@ const NetworkFlowMap = React.memo(function NetworkFlowMap({ machines, meteringEv
     });
   }, [edges, filterMode, selectedRepoFilter]);
 
-  // Helper coordinate generator for 3-column layout canvas
-  // Column 1 (Agents): X=60, Column 2 (Gateway): X=330, Column 3 (Repos): X=600
-  const getNodeCoordinates = (node: NodeItem, index: number, totalInCol: number) => {
-    if (node.type === 'agent') {
-      const colHeight = 340;
-      const step = colHeight / (totalInCol + 1);
-      return { x: 75, y: 35 + (index + 1) * step };
-    }
-    if (node.type === 'gateway') {
-      return { x: 330, y: 205 };
-    }
-    // Repo
-    const step = 200 / (totalInCol + 1);
-    return { x: 585, y: 105 + (index + 1) * step };
-  };
+  const { agentNodes, gatewayNodes, repoNodes, nodePosMap } = useMemo(() => {
+    // Helper coordinate generator for 3-column layout canvas
+    // Column 1 (Agents): X=60, Column 2 (Gateway): X=330, Column 3 (Repos): X=600
+    const getNodeCoordinates = (node: NodeItem, index: number, totalInCol: number) => {
+      if (node.type === 'agent') {
+        const colHeight = 340;
+        const step = colHeight / (totalInCol + 1);
+        return { x: 75, y: 35 + (index + 1) * step };
+      }
+      if (node.type === 'gateway') {
+        return { x: 330, y: 205 };
+      }
+      // Repo
+      const step = 200 / (totalInCol + 1);
+      return { x: 585, y: 105 + (index + 1) * step };
+    };
 
-  const agentNodes = nodes.filter(n => n.type === 'agent');
-  const gatewayNodes = nodes.filter(n => n.type === 'gateway');
-  const repoNodes = nodes.filter(n => n.type === 'repo');
+    const agents = nodes.filter(n => n.type === 'agent');
+    const gateways = nodes.filter(n => n.type === 'gateway');
+    const repos = nodes.filter(n => n.type === 'repo');
 
-  const nodePosMap = useMemo(() => {
     const map = new Map<string, { x: number; y: number }>();
-    agentNodes.forEach((n, i) => map.set(n.id, getNodeCoordinates(n, i, agentNodes.length)));
-    gatewayNodes.forEach((n, i) => map.set(n.id, getNodeCoordinates(n, i, gatewayNodes.length)));
-    repoNodes.forEach((n, i) => map.set(n.id, getNodeCoordinates(n, i, repoNodes.length)));
-    return map;
-  }, [agentNodes, gatewayNodes, repoNodes]);
+    agents.forEach((n, i) => map.set(n.id, getNodeCoordinates(n, i, agents.length)));
+    gateways.forEach((n, i) => map.set(n.id, getNodeCoordinates(n, i, gateways.length)));
+    repos.forEach((n, i) => map.set(n.id, getNodeCoordinates(n, i, repos.length)));
+
+    return { agentNodes: agents, gatewayNodes: gateways, repoNodes: repos, nodePosMap: map };
+  }, [nodes]);
 
   const selectedNode = nodes.find(n => n.id === selectedNodeId);
 
