@@ -13,3 +13,7 @@
 ## 2024-05-25 - useMemo for Derived Data in MonetizationGuard Render Body
 **Learning:** In the `MonetizationGuard` component, calculations for variables like `totalUnmonetized` and `totalLeakUsd` using `.filter()` and `.reduce()` inside the render body were causing unnecessary recalculations on local state changes (e.g. toggling modals), despite the component itself being heavily memoized via `React.memo`.
 **Action:** Always compute derived array structures and aggregated states in a component via `useMemo` hooks, specifying all references appropriately, even for localized calculations.
+
+## 2025-03-05 - Unmemoized Arrays in Dependency Arrays Defeat Memoization
+**Learning:** In `NetworkFlowMap.tsx`, the `useMemo` hook for `nodePosMap` included `[agentNodes, gatewayNodes, repoNodes]` in its dependency array. Because these arrays were derived on every render using `.filter()`, their references changed constantly (e.g. during local interactions like hover events). This defeated the memoization completely, causing the expensive Map recalculation to run on every render.
+**Action:** Never pass arrays derived in the render body via `.filter()` directly into a `useMemo` dependency array without memoization. Move the derivation logic inside the `useMemo` hook itself, and only depend on the source state (e.g., `nodes`).
