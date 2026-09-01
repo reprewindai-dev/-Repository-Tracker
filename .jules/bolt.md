@@ -13,3 +13,7 @@
 ## 2024-05-25 - useMemo for Derived Data in MonetizationGuard Render Body
 **Learning:** In the `MonetizationGuard` component, calculations for variables like `totalUnmonetized` and `totalLeakUsd` using `.filter()` and `.reduce()` inside the render body were causing unnecessary recalculations on local state changes (e.g. toggling modals), despite the component itself being heavily memoized via `React.memo`.
 **Action:** Always compute derived array structures and aggregated states in a component via `useMemo` hooks, specifying all references appropriately, even for localized calculations.
+
+## 2026-09-01 - Memoize Prop Array Reductions in Dashboard
+**Learning:** In heavily interactive components like `Dashboard.tsx`, performing array aggregations (like `.reduce()` over `meteringEvents`) in the render body creates a performance bottleneck when local state updates trigger re-renders (e.g., chart hover interactions). Even if the component itself is memoized, re-evaluating these derived primitive values wastes CPU cycles.
+**Action:** Always wrap prop array aggregations or transformations inside `useMemo` hooks, specifying all dependent variables correctly to avoid stale closures, thereby ensuring these calculations only run when the actual data props change.
