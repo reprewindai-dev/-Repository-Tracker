@@ -117,17 +117,21 @@ const Dashboard = React.memo(function Dashboard({
     : (dataScope === 'global_benchmark' ? machines.length : Math.min(machines.length, 3));
   
   // Total Micropayments
-  const baseRevenue = dataScope === 'global_benchmark' 
-    ? meteringEvents.reduce((sum, e) => sum + e.billing.total_usd, 0)
-    : 12.48;
-  const totalSettledRevenue = isGatewayEnforced ? baseRevenue + (totalClones * 0.002) : baseRevenue;
-  
-  // Estimated leak drops to 0 when enforced
-  const estimatedUnmonetizedLeak = isGatewayEnforced 
-    ? "0.00" 
-    : (dataScope === 'global_benchmark' 
-        ? ((totalClones - meteringEvents.length) * 0.04).toFixed(2)
-        : "48.20");
+  // ⚡ Bolt Optimization: Memoize summary metrics that require iterating over props
+  // like `meteringEvents` to prevent unnecessary recalculations during local state changes
+  // (e.g., hovering over charts or toggling tabs in the Dashboard).
+  const { baseRevenue, totalSettledRevenue, estimatedUnmonetizedLeak } = React.useMemo(() => {
+    const base = dataScope === "global_benchmark"
+      ? meteringEvents.reduce((sum, e) => sum + e.billing.total_usd, 0)
+      : 12.48;
+    const settled = isGatewayEnforced ? base + (totalClones * 0.002) : base;
+    const leak = isGatewayEnforced
+      ? "0.00"
+      : (dataScope === "global_benchmark"
+          ? ((totalClones - meteringEvents.length) * 0.04).toFixed(2)
+          : "48.20");
+    return { baseRevenue: base, totalSettledRevenue: settled, estimatedUnmonetizedLeak: leak };
+  }, [dataScope, meteringEvents, isGatewayEnforced, totalClones]);
 
   // SVG Chart Dimensions & Computations
   const width = 600;
