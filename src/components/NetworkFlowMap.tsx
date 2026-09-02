@@ -309,9 +309,11 @@ const NetworkFlowMap = React.memo(function NetworkFlowMap({ machines, meteringEv
     return { x: 585, y: 105 + (index + 1) * step };
   };
 
-  const agentNodes = nodes.filter(n => n.type === 'agent');
-  const gatewayNodes = nodes.filter(n => n.type === 'gateway');
-  const repoNodes = nodes.filter(n => n.type === 'repo');
+  const { agentNodes, gatewayNodes, repoNodes } = useMemo(() => ({
+    agentNodes: nodes.filter(n => n.type === 'agent'),
+    gatewayNodes: nodes.filter(n => n.type === 'gateway'),
+    repoNodes: nodes.filter(n => n.type === 'repo')
+  }), [nodes]);
 
   const nodePosMap = useMemo(() => {
     const map = new Map<string, { x: number; y: number }>();
