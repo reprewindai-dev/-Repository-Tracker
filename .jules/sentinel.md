@@ -22,3 +22,8 @@
 **Vulnerability:** The `/api/ops/issue-passports` endpoint used `crypto.generateKeyPairSync` in a loop, which blocked the main Node.js Event Loop, creating a severe Denial of Service (DoS) vulnerability that could freeze the entire application.
 **Learning:** In Node.js Express route handlers, synchronous cryptographic operations block the single thread, preventing the server from handling any other requests while the operation completes.
 **Prevention:** Always use asynchronous equivalents like `util.promisify(crypto.generateKeyPair)` to offload CPU-intensive crypto tasks and keep the Event Loop responsive.
+
+## 2024-10-26 - Add Rate Limiting to Registration Endpoint
+**Vulnerability:** The `/api/identity/register` endpoint lacked rate limiting, allowing an attacker to submit mass registration requests. Since each registration stores a new machine object in the unbounded in-memory `MACHINE_DB` Map, this could lead to memory exhaustion and a Denial of Service (DoS).
+**Learning:** Endpoints that allocate state in memory (or database) per request are prime targets for DoS attacks if left unrestricted.
+**Prevention:** Always implement rate limiting on sensitive or resource-intensive endpoints to bound resource allocation.

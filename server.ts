@@ -161,8 +161,36 @@ app.get("/api/discovery", (req, res) => {
   });
 });
 
+// 🛡️ Sentinel: Simple in-memory rate limiter to prevent DoS via mass registration
+const registerRateLimit = new Map<string, { count: number, resetTime: number }>();
+const MAX_REGISTRATIONS_PER_MIN = 20;
+
+// Periodically clean up expired rate limit entries to prevent memory leaks
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, data] of registerRateLimit.entries()) {
+    if (now > data.resetTime) {
+      registerRateLimit.delete(ip);
+    }
+  }
+}, 60000).unref();
+
 // 2. Machine Identity Registration
 app.post("/api/identity/register", (req, res) => {
+  // 🛡️ Sentinel: Enforce rate limit per IP to prevent memory exhaustion
+  const ip = req.ip || req.socket.remoteAddress || "unknown";
+  const now = Date.now();
+  let rateData = registerRateLimit.get(ip);
+  if (!rateData || now > rateData.resetTime) {
+    rateData = { count: 0, resetTime: now + 60000 };
+  }
+  rateData.count++;
+  registerRateLimit.set(ip, rateData);
+
+  if (rateData.count > MAX_REGISTRATIONS_PER_MIN) {
+    return res.status(429).json({ error: "Too many registrations from this IP. Please try again later." });
+  }
+
   const { workspace_id, repository, version, environment, origin } = req.body;
   
   if (!workspace_id || !repository) {
