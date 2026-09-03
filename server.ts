@@ -50,6 +50,27 @@ const MACHINE_DB = new Map<string, MachineIdentity>();
 const METERING_DB: MeteringEvent[] = [];
 const TELEMETRY_BUS: TelemetryLog[] = [];
 
+// 🛡️ Sentinel: Background cleanup mechanism to prune expired entries and prevent memory exhaustion DoS
+setInterval(() => {
+  // Prune METERING_DB if it grows too large (keep last 1000 events)
+  // Note: elements are added via unshift(), so the newest events are at the beginning (index 0).
+  // Splice(1000) removes all elements from index 1000 onwards, which deletes the oldest events.
+  if (METERING_DB.length > 1000) {
+    METERING_DB.splice(1000);
+  }
+  // Prune TELEMETRY_BUS if it grows too large (keep last 500 events)
+  if (TELEMETRY_BUS.length > 500) {
+    TELEMETRY_BUS.splice(500);
+  }
+  // Prune inactive machines older than 24 hours
+  const now = Date.now();
+  for (const [token, machine] of MACHINE_DB.entries()) {
+    if (now - new Date(machine.last_seen).getTime() > 24 * 3600 * 1000) {
+      MACHINE_DB.delete(token);
+    }
+  }
+}, 60000).unref();
+
 // Helper to log telemetry
 function emitTelemetry(type: TelemetryLog['type'], payload: any) {
   const log: TelemetryLog = {
