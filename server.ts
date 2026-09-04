@@ -48,6 +48,15 @@ function getAiClient(): GoogleGenAI {
 // In-Memory Databases for Simulation
 const MACHINE_DB = new Map<string, MachineIdentity>();
 const METERING_DB: MeteringEvent[] = [];
+
+// 🛡️ Sentinel: Background cleanup mechanism to prune entries and prevent memory leak DoS
+setInterval(() => {
+  if (METERING_DB.length > 5000) {
+    // Keep the latest 5000 events, discard the oldest (which are at the end since we unshift)
+    METERING_DB.length = 5000;
+  }
+}, 60000).unref();
+
 const TELEMETRY_BUS: TelemetryLog[] = [];
 
 // Helper to log telemetry
