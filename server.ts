@@ -50,6 +50,26 @@ const MACHINE_DB = new Map<string, MachineIdentity>();
 const METERING_DB: MeteringEvent[] = [];
 const TELEMETRY_BUS: TelemetryLog[] = [];
 
+// 🛡️ Sentinel: Background cleanup to prevent memory leak DoS vulnerabilities
+// Caps METERING_DB and TELEMETRY_BUS size and prunes inactive machines from MACHINE_DB
+setInterval(() => {
+  // Cap arrays populated via unshift to discard oldest items
+  if (METERING_DB.length > 5000) {
+    METERING_DB.length = 5000;
+  }
+  if (TELEMETRY_BUS.length > 5000) {
+    TELEMETRY_BUS.length = 5000;
+  }
+
+  const now = Date.now();
+  const ONE_DAY = 24 * 3600 * 1000;
+  for (const [token, machine] of MACHINE_DB.entries()) {
+    if (now - new Date(machine.last_seen).getTime() > ONE_DAY) {
+      MACHINE_DB.delete(token);
+    }
+  }
+}, 60000).unref();
+
 // Helper to log telemetry
 function emitTelemetry(type: TelemetryLog['type'], payload: any) {
   const log: TelemetryLog = {
