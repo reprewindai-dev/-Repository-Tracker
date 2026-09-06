@@ -309,9 +309,11 @@ const NetworkFlowMap = React.memo(function NetworkFlowMap({ machines, meteringEv
     return { x: 585, y: 105 + (index + 1) * step };
   };
 
-  const agentNodes = nodes.filter(n => n.type === 'agent');
-  const gatewayNodes = nodes.filter(n => n.type === 'gateway');
-  const repoNodes = nodes.filter(n => n.type === 'repo');
+  // ⚡ Bolt Optimization: Wrap derived arrays (filter) in useMemo to prevent them from breaking
+  // downstream memoization (nodePosMap) during local state changes (e.g., hover, selection).
+  const agentNodes = useMemo(() => nodes.filter(n => n.type === 'agent'), [nodes]);
+  const gatewayNodes = useMemo(() => nodes.filter(n => n.type === 'gateway'), [nodes]);
+  const repoNodes = useMemo(() => nodes.filter(n => n.type === 'repo'), [nodes]);
 
   const nodePosMap = useMemo(() => {
     const map = new Map<string, { x: number; y: number }>();
@@ -321,7 +323,8 @@ const NetworkFlowMap = React.memo(function NetworkFlowMap({ machines, meteringEv
     return map;
   }, [agentNodes, gatewayNodes, repoNodes]);
 
-  const selectedNode = nodes.find(n => n.id === selectedNodeId);
+  // ⚡ Bolt Optimization: Memoize the selected node lookup to avoid O(n) array search on every hover interaction.
+  const selectedNode = useMemo(() => nodes.find(n => n.id === selectedNodeId), [nodes, selectedNodeId]);
 
   return (
     <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 space-y-4">
