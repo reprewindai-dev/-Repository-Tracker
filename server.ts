@@ -50,6 +50,13 @@ const MACHINE_DB = new Map<string, MachineIdentity>();
 const METERING_DB: MeteringEvent[] = [];
 const TELEMETRY_BUS: TelemetryLog[] = [];
 
+// 🛡️ Sentinel: Prevent Memory Exhaustion (DoS) by periodically truncating the unbounded METERING_DB array.
+setInterval(() => {
+  if (METERING_DB.length > 1000) {
+    METERING_DB.length = 1000;
+  }
+}, 60 * 1000).unref();
+
 // Helper to log telemetry
 function emitTelemetry(type: TelemetryLog['type'], payload: any) {
   const log: TelemetryLog = {
