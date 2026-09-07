@@ -254,6 +254,10 @@ app.post("/api/metering/record", (req, res) => {
   };
 
   METERING_DB.unshift(event);
+  // 🛡️ Sentinel: Synchronously cap unbounded array to prevent memory leak DoS
+  if (METERING_DB.length > 1000) {
+    METERING_DB.length = 1000;
+  }
   emitTelemetry("metering.recorded", event);
 
   res.json({
@@ -367,6 +371,10 @@ app.post("/api/gateway/:capability", (req, res) => {
   };
 
   METERING_DB.unshift(meteringEvent);
+  // 🛡️ Sentinel: Synchronously cap unbounded array to prevent memory leak DoS
+  if (METERING_DB.length > 1000) {
+    METERING_DB.length = 1000;
+  }
   emitTelemetry("metering.recorded", meteringEvent);
 
   res.json({
@@ -441,6 +449,10 @@ app.post("/api/x402/verify-passport", (req, res) => {
         ledger_anchor: ledgerAnchor
       }
     });
+    // 🛡️ Sentinel: Synchronously cap unbounded array to prevent memory leak DoS
+    if (METERING_DB.length > 1000) {
+      METERING_DB.length = 1000;
+    }
 
     return res.json({
       status: "authorized",
