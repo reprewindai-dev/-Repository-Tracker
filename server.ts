@@ -60,7 +60,7 @@ function emitTelemetry(type: TelemetryLog['type'], payload: any) {
   };
   TELEMETRY_BUS.unshift(log);
   if (TELEMETRY_BUS.length > 500) {
-    TELEMETRY_BUS.pop();
+    TELEMETRY_BUS.length = 500; // 🛡️ Sentinel: Cap using length to correctly discard oldest items
   }
 }
 
@@ -254,6 +254,7 @@ app.post("/api/metering/record", (req, res) => {
   };
 
   METERING_DB.unshift(event);
+  if (METERING_DB.length > 1000) METERING_DB.length = 1000; // 🛡️ Sentinel: Cap array size to prevent memory exhaustion DoS
   emitTelemetry("metering.recorded", event);
 
   res.json({
@@ -367,6 +368,7 @@ app.post("/api/gateway/:capability", (req, res) => {
   };
 
   METERING_DB.unshift(meteringEvent);
+  if (METERING_DB.length > 1000) METERING_DB.length = 1000; // 🛡️ Sentinel: Cap array size to prevent memory exhaustion DoS
   emitTelemetry("metering.recorded", meteringEvent);
 
   res.json({
@@ -441,6 +443,7 @@ app.post("/api/x402/verify-passport", (req, res) => {
         ledger_anchor: ledgerAnchor
       }
     });
+    if (METERING_DB.length > 1000) METERING_DB.length = 1000; // 🛡️ Sentinel: Cap array size to prevent memory exhaustion DoS
 
     return res.json({
       status: "authorized",
