@@ -13,3 +13,7 @@
 ## 2024-05-25 - useMemo for Derived Data in MonetizationGuard Render Body
 **Learning:** In the `MonetizationGuard` component, calculations for variables like `totalUnmonetized` and `totalLeakUsd` using `.filter()` and `.reduce()` inside the render body were causing unnecessary recalculations on local state changes (e.g. toggling modals), despite the component itself being heavily memoized via `React.memo`.
 **Action:** Always compute derived array structures and aggregated states in a component via `useMemo` hooks, specifying all references appropriately, even for localized calculations.
+
+## 2024-05-25 - Prevent In-Memory DB Unbounded Growth
+**Learning:** In-memory state objects (like arrays used for logs or DBs, e.g., `METERING_DB`) that grow continuously over time via `unshift` become memory leaks and performance bottlenecks, eventually causing OOM (Out Of Memory) crashes. Background timers are insufficient for burst traffic DoS protection; limits must be enforced synchronously at the time of insertion.
+**Action:** Always cap the size of unbounded arrays explicitly upon insertion. When capping an array populated via `unshift`, use `array.length = MAX_SIZE` to cleanly discard the oldest items at the end, rather than using `array.splice()`.
