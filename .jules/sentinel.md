@@ -22,3 +22,8 @@
 **Vulnerability:** The `/api/ops/issue-passports` endpoint used `crypto.generateKeyPairSync` in a loop, which blocked the main Node.js Event Loop, creating a severe Denial of Service (DoS) vulnerability that could freeze the entire application.
 **Learning:** In Node.js Express route handlers, synchronous cryptographic operations block the single thread, preventing the server from handling any other requests while the operation completes.
 **Prevention:** Always use asynchronous equivalents like `util.promisify(crypto.generateKeyPair)` to offload CPU-intensive crypto tasks and keep the Event Loop responsive.
+
+## 2025-03-09 - Prevent DoS from Unbounded In-Memory Arrays
+**Vulnerability:** The in-memory array `METERING_DB` grew indefinitely via `unshift()` without any maximum length, allowing an attacker to cause memory exhaustion (DoS) by sending burst traffic to metering endpoints.
+**Learning:** In-memory state objects that grow over time, like event logs, must always have a cap. Background timers are insufficient for burst traffic DoS protection.
+**Prevention:** Enforce array limits synchronously at the time of insertion. When capping arrays populated via `unshift`, use `array.length = MAX_SIZE` to correctly and efficiently discard the oldest items at the end of the array.

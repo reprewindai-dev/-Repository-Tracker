@@ -254,6 +254,7 @@ app.post("/api/metering/record", (req, res) => {
   };
 
   METERING_DB.unshift(event);
+  if (METERING_DB.length > 500) METERING_DB.length = 500;
   emitTelemetry("metering.recorded", event);
 
   res.json({
@@ -367,6 +368,7 @@ app.post("/api/gateway/:capability", (req, res) => {
   };
 
   METERING_DB.unshift(meteringEvent);
+  if (METERING_DB.length > 500) METERING_DB.length = 500;
   emitTelemetry("metering.recorded", meteringEvent);
 
   res.json({
@@ -441,6 +443,7 @@ app.post("/api/x402/verify-passport", (req, res) => {
         ledger_anchor: ledgerAnchor
       }
     });
+    if (METERING_DB.length > 500) METERING_DB.length = 500;
 
     return res.json({
       status: "authorized",
